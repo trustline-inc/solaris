@@ -353,8 +353,9 @@ describe("Bridge", function () {
       let event = receipt.events?.filter((x) => {
         return x.event == "IssuanceCompleted";
       });
+
       expect(event[0].args[0]).to.equal(issuer);
-      expect(event[0].args[1]).to.equal(AMOUNT_TO_ISSUE);
+      expect(event[0].args[1].toNumber()).to.equal(AMOUNT_TO_ISSUE);
     });
   });
 
@@ -520,7 +521,7 @@ describe("Bridge", function () {
       );
       let issuerResult = await bridge.reservations(redemptionHash);
       expect(issuerResult[0]).to.equal(ADDRESS_ZERO);
-      expect(issuerResult[1]).to.equal(0);
+      expect(issuerResult[1].toNumber()).to.equal(0);
 
       await bridge.createRedemptionReservation(source, issuer, 0);
 
@@ -705,8 +706,8 @@ describe("Bridge", function () {
       let redemptionResult = await bridge.redemptions(txHash);
       expect(redemptionResult[0]).to.equal("");
       expect(redemptionResult[1]).to.equal("");
-      expect(redemptionResult[2]).to.equal(0);
-      expect(redemptionResult[3]).to.equal(0);
+      expect(redemptionResult[2].toNumber()).to.equal(0);
+      expect(redemptionResult[3].toNumber()).to.equal(0);
       expect(redemptionResult[4]).to.equal(ADDRESS_ZERO);
       expect(redemptionResult[5]).to.equal(ADDRESS_ZERO);
 
@@ -723,8 +724,8 @@ describe("Bridge", function () {
       redemptionResult = await bridge.redemptions(txHash);
       expect(redemptionResult[0]).to.equal(source);
       expect(redemptionResult[1]).to.equal(issuer);
-      expect(redemptionResult[2]).to.equal(destinationTag);
-      expect(redemptionResult[3]).to.equal(AMOUNT_TO_WITHDRAW);
+      expect(redemptionResult[2].toNumber()).to.equal(destinationTag);
+      expect(redemptionResult[3].toNumber()).to.equal(AMOUNT_TO_WITHDRAW);
       expect(redemptionResult[4]).to.equal(redeemer.address);
       expect(redemptionResult[5]).to.equal(owner.address);
     });
