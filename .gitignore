@@ -1,0 +1,17 @@
+# Node.js
+node_modules
+.npmrc
+
+# Keystore file
+keystore.json
+
+# IDE config
+.idea
+
+# Hardhat files
+cache
+artifacts
+typechain
+
+# Dotenv file
+.env
