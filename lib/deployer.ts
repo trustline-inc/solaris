@@ -101,6 +101,7 @@ const deployBridge = async () => {
       signers.owner
   )) as BridgeFactory;
   contracts.bridge = await bridgeFactory.deploy(
+      "AUR",
       contracts.erc20.address,
       contracts.stateConnector.address
   );

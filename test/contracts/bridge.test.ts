@@ -95,8 +95,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       status = await bridge.getIssuerStatus(issuer);
       expect(status).to.equal(statuses.COMPLETED);
@@ -113,8 +112,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       let status = await bridge.getIssuerStatus(issuer);
       expect(status).to.equal(statuses.COMPLETED);
@@ -126,7 +124,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_ISSUE,
-        currencyHash,
         redeemer.address
       );
 
@@ -141,16 +138,14 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       await bridge.proveFraud(
         web3.utils.keccak256("second tx hash"),
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       let status = await bridge.getIssuerStatus(issuer);
@@ -224,8 +219,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       await assertRevert(
         bridge.cancelIssuer(issuer),
@@ -272,8 +266,7 @@ describe("Bridge", function () {
           source,
           issuer,
           0,
-          AMOUNT_TO_ISSUE,
-          currencyHash
+          AMOUNT_TO_ISSUE
         ),
         errorTypes.ISSUER_NOT_PENDING
       );
@@ -283,8 +276,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
     });
 
@@ -297,8 +289,7 @@ describe("Bridge", function () {
           source,
           issuer,
           0,
-          AMOUNT_TO_ISSUE,
-          currencyHash
+          AMOUNT_TO_ISSUE
         ),
         errorTypes.PAYMENT_NOT_PROVEN
       );
@@ -308,8 +299,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
     });
 
@@ -327,8 +317,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       issuerResult = await bridge.issuers(issuer);
@@ -345,8 +334,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       let receipt = await tx.wait();
@@ -367,8 +355,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       await assertRevert(
@@ -377,8 +364,7 @@ describe("Bridge", function () {
           source,
           issuer,
           0,
-          AMOUNT_TO_ISSUE,
-          currencyHash
+          AMOUNT_TO_ISSUE
         ),
         errorTypes.TX_ID_ALREADY_PROVEN
       );
@@ -388,8 +374,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
     });
 
@@ -401,8 +386,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       await stateConnector.setFinality(false);
       await assertRevert(
@@ -411,8 +395,7 @@ describe("Bridge", function () {
           source,
           issuer,
           0,
-          AMOUNT_TO_ISSUE,
-          currencyHash
+          AMOUNT_TO_ISSUE
         ),
         errorTypes.PAYMENT_NOT_PROVEN
       );
@@ -423,8 +406,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
     });
 
@@ -435,8 +417,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       let issuerResult = await bridge.issuers(issuer);
@@ -450,8 +431,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       issuerResult = await bridge.issuers(issuer);
@@ -468,8 +448,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       const bridgeUser = bridge.connect(user);
@@ -480,8 +459,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
       const after = await erc20Token.balanceOf(user.address);
       expect(after.toNumber() - before.toNumber()).to.equal(AMOUNT_TO_ISSUE);
@@ -496,8 +474,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
     });
 
@@ -540,8 +517,7 @@ describe("Bridge", function () {
         source,
         issuer,
         0,
-        AMOUNT_TO_ISSUE,
-        currencyHash
+        AMOUNT_TO_ISSUE
       );
 
       await bridge.createRedemptionReservation(source, issuer, 0);
@@ -555,7 +531,6 @@ describe("Bridge", function () {
           issuer,
           0,
           AMOUNT_TO_ISSUE,
-          currencyHash,
           ADDRESS_ZERO
         ),
         errorTypes.NON_ZERO_DESTINATION_ADDRESS
@@ -567,7 +542,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_ISSUE,
-        currencyHash,
         redeemer.address
       );
     });
@@ -579,7 +553,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_ISSUE,
-        currencyHash,
         redeemer.address
       );
 
@@ -590,7 +563,6 @@ describe("Bridge", function () {
           issuer,
           0,
           AMOUNT_TO_ISSUE,
-          currencyHash,
           redeemer.address
         ),
         errorTypes.TX_ID_ALREADY_REDEEMED
@@ -606,7 +578,6 @@ describe("Bridge", function () {
           issuer,
           0,
           AMOUNT_TO_ISSUE,
-          currencyHash,
           redeemer.address
         ),
         errorTypes.ONLY_REDEEMER
@@ -618,7 +589,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_ISSUE,
-        currencyHash,
         redeemer.address
       );
     });
@@ -632,7 +602,6 @@ describe("Bridge", function () {
           issuer,
           0,
           AMOUNT_TO_ISSUE,
-          currencyHash,
           redeemer.address
         ),
         errorTypes.PAYMENT_NOT_PROVEN
@@ -645,7 +614,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_ISSUE,
-        currencyHash,
         redeemer.address
       );
     });
@@ -659,7 +627,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_WITHDRAW,
-        currencyHash,
         redeemer.address
       );
       const after = await erc20Token.balanceOf(redeemer.address);
@@ -675,7 +642,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_WITHDRAW,
-        currencyHash,
         redeemer.address
       );
       const after = await bridge.issuers(issuer);
@@ -694,7 +660,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_WITHDRAW,
-        currencyHash,
         redeemer.address
       );
       const after = await bridge.issuers(issuer);
@@ -717,7 +682,6 @@ describe("Bridge", function () {
         issuer,
         0,
         AMOUNT_TO_WITHDRAW,
-        currencyHash,
         redeemer.address
       );
 

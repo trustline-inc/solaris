@@ -7,7 +7,7 @@ import "./interfaces/IERC20.sol";
 interface StateConnectorLIke {
   function getPaymentFinality(
     uint32 chainId,
-    bytes32 txId,
+    bytes32 txHash,
     bytes32 destinationHash,
     uint64 amount,
     bytes32 currencyHash
@@ -97,8 +97,9 @@ contract Bridge {
     Status status;
   }
 
-  IERC20 aurei;
-  StateConnectorLIke stateConnector;
+  IERC20 public aurei;
+  StateConnectorLIke public stateConnector;
+  string public currencyCode; // XRPL currency code to issue , https://xrpl.org/currency-formats.html#currency-codes
 
   // redemption hash keccak256(source, issuer, destinationTag)
   mapping(bytes32 => Reservation) public reservations;
@@ -111,7 +112,9 @@ contract Bridge {
   // Constructor
   /////////////////////////////////////////
 
-  constructor(address aureiAddress, address stateConnectorAddress) {
+  constructor(string memory currCode, address aureiAddress, address stateConnectorAddress) {
+    require(bytes(currCode).length != 0, "Currency Code can not be empty");
+    currencyCode = currCode;
     aurei = IERC20(aureiAddress);
     stateConnector = StateConnectorLIke(stateConnectorAddress);
   }
@@ -176,23 +179,21 @@ contract Bridge {
    * @param issuer the address of the issuer
    * @param destinationTag the destination tag
    * @param amount the amount issued
-   * @param currencyHash hash of the currency code
    **/
   function completeIssuance(
     bytes32 txHash,
     string calldata source,
     string calldata issuer,
     uint64 destinationTag,
-    uint64 amount,
-    bytes32 currencyHash
+    uint64 amount
   ) external issuerMustBePending(issuer) {
+
     verifyPaymentFinality(
       txHash,
       source,
       issuer,
       destinationTag,
-      amount,
-      currencyHash
+      amount
     );
 
     issuers[issuer].XrplTxId = txHash;
@@ -210,27 +211,25 @@ contract Bridge {
    * @param issuer the issuer address of the tx
    * @param destinationTag the destination tag of the tx
    * @param amount the amount sent in the tx
-   * @param currencyHash hash of the currency code
    **/
   function proveFraud(
     bytes32 txHash,
     string calldata source,
     string calldata issuer,
     uint64 destinationTag,
-    uint64 amount,
-    bytes32 currencyHash
+    uint64 amount
   ) external {
     require(
       issuers[issuer].XrplTxId != txHash,
       "The provided transaction has already been proved."
     );
+
     verifyPaymentFinality(
       txHash,
       source,
       issuer,
       destinationTag,
-      amount,
-      currencyHash
+      amount
     );
 
     issuers[issuer].status = Status.FRAUDULENT;
@@ -282,7 +281,6 @@ contract Bridge {
    * @param issuer the issuer address of the tx
    * @param destinationTag the issuer Tag of tx
    * @param amount sent in tx
-   * @param currencyHash hash of the currency code
    **/
   function completeRedemption(
     bytes32 txID,
@@ -290,14 +288,13 @@ contract Bridge {
     string calldata issuer,
     uint64 destinationTag,
     uint64 amount,
-    bytes32 currencyHash,
     address destAddress
   ) external {
     require(
       destAddress != address(0),
       "Destination address cannot be the zero address."
     );
-    // TODO: #65 @shine2lay tokenReleaseAddress is not assigned a value.
+
     require(
       redemptions[txID].tokenReleaseAddress == address(0),
       "This transaction ID has already been used to redeem tokens."
@@ -317,8 +314,7 @@ contract Bridge {
       source,
       issuer,
       destinationTag,
-      amount,
-      currencyHash
+      amount
     );
     issuers[issuer].amount = issuers[issuer].amount - amount;
     aurei.transfer(destAddress, amount);
@@ -355,16 +351,16 @@ contract Bridge {
    * @param txID the issuance transaction ID from the XRPL
    * @param issuer the address of the issuing account
    * @param amount the issuance amount
-   * @param currencyHash hash of the currency code
    **/
   function verifyPaymentFinality(
     bytes32 txID,
     string calldata source,
     string calldata issuer,
     uint64 destinationTag,
-    uint64 amount,
-    bytes32 currencyHash
+    uint64 amount
   ) internal {
+    bytes32 currencyHash = keccak256(abi.encodePacked(currencyCode, issuer));
+
     (, , bool isFinal) = stateConnector.getPaymentFinality(
       uint32(0),
       txID,
