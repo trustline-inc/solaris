@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IERC20.sol";
 
-interface StateConnectorLIke {
+interface StateConnectorLike {
   function getPaymentFinality(
     uint32 chainId,
     bytes32 txHash,
@@ -97,9 +97,9 @@ contract Bridge {
     Status status;
   }
 
-  IERC20 public aurei;
-  StateConnectorLIke public stateConnector;
-  string public currencyCode; // XRPL currency code to issue , https://xrpl.org/currency-formats.html#currency-codes
+  IERC20 public erc20;
+  StateConnectorLike public stateConnector;
+  string public currencyCode; // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
 
   // redemption hash keccak256(source, issuer, destinationTag)
   mapping(bytes32 => Reservation) public reservations;
@@ -112,11 +112,11 @@ contract Bridge {
   // Constructor
   /////////////////////////////////////////
 
-  constructor(string memory currCode, address aureiAddress, address stateConnectorAddress) {
+  constructor(string memory currCode, address erc20AssetAddress, address stateConnectorAddress) {
     require(bytes(currCode).length != 0, "Currency Code can not be empty");
     currencyCode = currCode;
-    aurei = IERC20(aureiAddress);
-    stateConnector = StateConnectorLIke(stateConnectorAddress);
+    erc20 = IERC20(erc20AssetAddress);
+    stateConnector = StateConnectorLike(stateConnectorAddress);
   }
 
   /////////////////////////////////////////
@@ -147,7 +147,7 @@ contract Bridge {
     issuerDoesNotExist(issuer)
   {
     require(amount > 0, "Amount must be greater than zero.");
-    aurei.transferFrom(msg.sender, address(this), amount);
+    lockAsset(msg.sender, amount);
     issuers[issuer].amount = amount;
     issuers[issuer].sender = msg.sender;
     issuers[issuer].status = Status.PENDING;
@@ -167,7 +167,7 @@ contract Bridge {
       issuers[issuer].sender == msg.sender,
       "Only the originating account can cancel this issuer."
     );
-    aurei.transfer(msg.sender, issuers[issuer].amount);
+    unLockAsset(msg.sender, issuers[issuer].amount);
     issuers[issuer].status = Status.CANCELED;
   }
 
@@ -235,7 +235,7 @@ contract Bridge {
     issuers[issuer].status = Status.FRAUDULENT;
     uint256 amountToSend = issuers[issuer].amount;
     issuers[issuer].amount = 0;
-    aurei.transfer(msg.sender, amountToSend);
+    unLockAsset(msg.sender, amountToSend);
   }
 
   /**
@@ -317,7 +317,7 @@ contract Bridge {
       amount
     );
     issuers[issuer].amount = issuers[issuer].amount - amount;
-    aurei.transfer(destAddress, amount);
+    unLockAsset(destAddress, amount);
     redemptions[txID] = Redemption(
       source,
       issuer,
@@ -345,6 +345,27 @@ contract Bridge {
   /////////////////////////////////////////
   // Internal Functions
   /////////////////////////////////////////
+
+  /**
+   * @dev transfer the asset from the user to the contract
+   * @param user the address of the user
+   * @param amount of asset to transfer from the user
+   **/
+  function lockAsset(address user, uint256 amount) internal {
+    erc20.transferFrom(user, address(this), amount);
+  }
+
+
+
+  /**
+   * @dev transfer the asset from contract to the user
+   * @param user the address of the user
+   * @param amount of asset to transfer from the user
+   **/
+  function unLockAsset(address user, uint256 amount) internal {
+    erc20.transfer(user, amount);
+  }
+
 
   /**
    * @dev Proves that the XRPL issuance is completed.
