@@ -108,6 +108,7 @@ contract Bridge {
   // issuer address to the amount Issuer struct
   mapping(string => Issuer) public issuers;
   string[] public issuerList;
+  string[] public verifiedIssuerList;
 
   /////////////////////////////////////////
   // Constructor
@@ -125,16 +126,27 @@ contract Bridge {
   /////////////////////////////////////////
 
   /**
-   * @notice return the length of the issuerList array
-   * @dev since the whole string array can not be returned, returning the list length could help client side reconstruct
-   *      the array
+   * @notice Returns a issuer list
+   * @return issuer list
    */
-  function getIssuerListLength()
+  function getIssuerList()
     external
     view
-    returns (uint256 length)
+    returns(string[] memory)
   {
-    return issuerList.length;
+    return issuerList;
+  }
+
+  /**
+   * @notice Returns a verified issuer list
+   * @return verified issuer list
+   */
+  function getVerifiedIssuerList()
+    external
+    view
+    returns(string[] memory)
+  {
+    return verifiedIssuerList;
   }
 
   /**
@@ -214,6 +226,7 @@ contract Bridge {
 
     issuers[issuer].XrplTxId = txHash;
     issuers[issuer].status = Status.COMPLETED;
+    verifiedIssuerList.push(issuer);
     emit IssuanceCompleted(issuer, amount);
   }
 
@@ -251,6 +264,7 @@ contract Bridge {
     issuers[issuer].status = Status.FRAUDULENT;
     uint256 amountToSend = issuers[issuer].amount;
     issuers[issuer].amount = 0;
+    removeVerifiedIssuer(issuer);
     unLockAsset(msg.sender, amountToSend);
   }
 
@@ -345,6 +359,7 @@ contract Bridge {
 
     if (issuers[issuer].amount == 0) {
       issuers[issuer].status = Status.REDEEMED;
+      removeVerifiedIssuer(issuer);
     }
 
     emit RedemptionCompleted(txID, amount);
@@ -361,6 +376,20 @@ contract Bridge {
   /////////////////////////////////////////
   // Internal Functions
   /////////////////////////////////////////
+
+  /**
+   * @dev Remove a Verified issuer from verified issuer list
+   * @param issuer the issuer address
+   **/
+  function removeVerifiedIssuer(string memory issuer) internal {
+    for (uint256 i = 0; i < verifiedIssuerList.length; i++) {
+      if (keccak256(abi.encodePacked(verifiedIssuerList[i])) == keccak256(abi.encodePacked(issuer))) {
+        verifiedIssuerList[i] = verifiedIssuerList[verifiedIssuerList.length - 1];
+        verifiedIssuerList.pop();
+        break;
+      }
+    }
+  }
 
   /**
    * @dev transfer the asset from the user to the contract

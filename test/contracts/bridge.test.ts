@@ -202,11 +202,13 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is added to issuerList", async () => {
-      const issuerListLengthBefore = await bridge.getIssuerListLength();
+      const issuerListBefore = await bridge.getIssuerList();
+      expect(issuerListBefore.length).to.equal(0)
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
 
-      const issuerListLengthAfter = await bridge.getIssuerListLength();
-      expect(issuerListLengthAfter.sub(issuerListLengthBefore).toNumber()).to.equal(1)
+      const issuerListAfter = await bridge.getIssuerList();
+      expect(issuerListAfter.length).to.equal(1)
+      expect(issuerListAfter[0]).to.equal(issuer)
     });
   });
 
@@ -353,6 +355,23 @@ describe("Bridge", function () {
       expect(event[0].args[0]).to.equal(issuer);
       expect(event[0].args[1].toNumber()).to.equal(AMOUNT_TO_ISSUE);
     });
+
+    it("checks that issuer is added to verifiedIssuerList", async () => {
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersBefore.length).to.equal(0)
+      await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
+      await bridge.completeIssuance(
+          txHash,
+          source,
+          issuer,
+          0,
+          AMOUNT_TO_ISSUE
+      );
+
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersAfter.length).to.equal(1)
+      expect(verifiedIssuersAfter[0]).to.equal(issuer)
+    });
   });
 
   describe("proveFraud", async function () {
@@ -471,6 +490,33 @@ describe("Bridge", function () {
       );
       const after = await erc20Token.balanceOf(user.address);
       expect(after.toNumber() - before.toNumber()).to.equal(AMOUNT_TO_ISSUE);
+    });
+
+    it("checks that issuer is removed from verifiedIssuerList", async () => {
+      await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
+      await bridge.completeIssuance(
+          txHash,
+          source,
+          issuer,
+          0,
+          AMOUNT_TO_ISSUE
+      );
+
+
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersBefore.length).to.equal(1)
+      expect(verifiedIssuersBefore[0]).to.equal(issuer)
+
+      await bridge.proveFraud(
+          web3.utils.keccak256("second tx hash"),
+          source,
+          issuer,
+          0,
+          AMOUNT_TO_ISSUE
+      );
+
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersAfter.length).to.equal(0)
     });
   });
 
@@ -672,6 +718,25 @@ describe("Bridge", function () {
       );
       const after = await bridge.issuers(issuer);
       expect(after[3]).to.equal(statuses.REDEEMED);
+    });
+
+    it("checks that issuer is removed from verifiedIssuerList", async () => {
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersBefore.length).to.equal(1)
+      expect(verifiedIssuersBefore[0]).to.equal(issuer)
+
+      const AMOUNT_TO_WITHDRAW = 10;
+      await bridge.completeRedemption(
+          txHash,
+          source,
+          issuer,
+          0,
+          AMOUNT_TO_WITHDRAW,
+          redeemer.address
+      );
+
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      expect(verifiedIssuersAfter.length).to.equal(0)
     });
 
     it("check the redemption entry is created", async () => {
