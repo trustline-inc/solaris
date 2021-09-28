@@ -2,8 +2,6 @@ require("dotenv").config();
 import { existsSync } from "fs";
 import "hardhat-typechain";
 import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-web3";
-import "@nomiclabs/hardhat-waffle";
 import { HardhatUserConfig } from "hardhat/config";
 
 // Add Flare local accounts from Flare config

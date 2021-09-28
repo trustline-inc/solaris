@@ -1,11 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-waffle";
-import "@nomiclabs/hardhat-web3";
+// import "@nomiclabs/hardhat-waffle";
 
 import { Erc20Token, Bridge, StateConnector } from "../../typechain";
 import { deployBridgeSystem } from "../../lib/deployer";
-import { ethers, web3 } from "hardhat";
+import { ethers } from "hardhat";
 import * as chai from "chai";
 import { errorTypes, ADDRESS_ZERO, BYTES32_ZERO } from "./utils/constants";
 import assertRevert from "./utils/assertRevert";
@@ -53,8 +52,8 @@ describe("Bridge", function () {
     redeemer = signers.charlie;
     owner = signers.owner;
     user = signers.alice;
-    txHash = web3.utils.keccak256("tx hash");
-    currencyHash = web3.utils.keccak256("currency hash");
+    txHash = ethers.utils.id("tx hash");
+    currencyHash = ethers.utils.id("currency hash");
     source = "source";
     destinationTag = 0;
   });
@@ -83,7 +82,7 @@ describe("Bridge", function () {
     });
 
     it("checks that COMPLETE issuer status is returned correctly", async () => {
-      const txHash = web3.utils.keccak256("some hash");
+      const txHash = ethers.utils.id("some hash");
 
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
 
@@ -119,7 +118,7 @@ describe("Bridge", function () {
 
       await bridge.createRedemptionReservation(source, issuer, 0);
       await bridge.completeRedemption(
-        web3.utils.keccak256("second tx hash"),
+        ethers.utils.id("second tx hash"),
         source,
         issuer,
         0,
@@ -141,7 +140,7 @@ describe("Bridge", function () {
         AMOUNT_TO_ISSUE
       );
       await bridge.proveFraud(
-        web3.utils.keccak256("second tx hash"),
+        ethers.utils.id("second tx hash"),
         source,
         issuer,
         0,
@@ -397,7 +396,7 @@ describe("Bridge", function () {
       );
 
       await bridge.proveFraud(
-        web3.utils.keccak256("second tx hash"),
+        ethers.utils.id("second tx hash"),
         source,
         issuer,
         0,
@@ -406,7 +405,7 @@ describe("Bridge", function () {
     });
 
     it("fails payment hasn't been proven on stateConnector", async () => {
-      const secondtxHash = web3.utils.keccak256("second tx hash");
+      const secondtxHash = ethers.utils.id("second tx hash");
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
       await bridge.completeIssuance(
         txHash,
@@ -454,7 +453,7 @@ describe("Bridge", function () {
       expect(issuerResult[3]).to.equal(statuses.COMPLETED);
 
       await bridge.proveFraud(
-        web3.utils.keccak256("second tx hash"),
+        ethers.utils.id("second tx hash"),
         source,
         issuer,
         0,
@@ -482,7 +481,7 @@ describe("Bridge", function () {
 
       const before = await erc20Token.balanceOf(user.address);
       await bridgeUser.proveFraud(
-        web3.utils.keccak256("second tx hash"),
+        ethers.utils.id("second tx hash"),
         source,
         issuer,
         0,
@@ -508,7 +507,7 @@ describe("Bridge", function () {
       expect(verifiedIssuersBefore[0]).to.equal(issuer)
 
       await bridge.proveFraud(
-          web3.utils.keccak256("second tx hash"),
+          ethers.utils.id("second tx hash"),
           source,
           issuer,
           0,

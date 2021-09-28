@@ -18,8 +18,10 @@ async function main() {
       .toUpperCase();
     addresses.push({
       Contract: contractDisplayName,
+      // @ts-ignore
       Address: contracts[contract].address,
     });
+    // @ts-ignore
     fileOutput += `${contractDisplayName}=${contracts[contract].address}\n`;
   }
 

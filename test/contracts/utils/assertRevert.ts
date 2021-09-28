@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-async function assertRevert(promise, errorString) {
+async function assertRevert(promise: any, errorString: string) {
   try {
     await promise;
   } catch (err) {
