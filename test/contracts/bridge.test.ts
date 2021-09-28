@@ -200,6 +200,14 @@ describe("Bridge", function () {
       expect(issuerResult[2]).to.equal(BYTES32_ZERO);
       expect(issuerResult[3]).to.equal(statuses.PENDING);
     });
+
+    it("checks that issuer is added to issuerList", async () => {
+      const issuerListLengthBefore = await bridge.getIssuerListLength();
+      await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
+
+      const issuerListLengthAfter = await bridge.getIssuerListLength();
+      expect(issuerListLengthAfter.sub(issuerListLengthBefore).toNumber()).to.equal(1)
+    });
   });
 
   describe("cancelIssuer", async function () {

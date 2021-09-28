@@ -107,6 +107,7 @@ contract Bridge {
   mapping(bytes32 => Redemption) public redemptions;
   // issuer address to the amount Issuer struct
   mapping(string => Issuer) public issuers;
+  string[] public issuerList;
 
   /////////////////////////////////////////
   // Constructor
@@ -122,6 +123,19 @@ contract Bridge {
   /////////////////////////////////////////
   // Public functions
   /////////////////////////////////////////
+
+  /**
+   * @notice return the length of the issuerList array
+   * @dev since the whole string array can not be returned, returning the list length could help client side reconstruct
+   *      the array
+   */
+  function getIssuerListLength()
+    external
+    view
+    returns (uint256 length)
+  {
+    return issuerList.length;
+  }
 
   /**
    * @notice Call this function to check whether to accept tokens from this issuer
@@ -151,6 +165,8 @@ contract Bridge {
     issuers[issuer].amount = amount;
     issuers[issuer].sender = msg.sender;
     issuers[issuer].status = Status.PENDING;
+
+    issuerList.push(issuer);
   }
 
   /**
@@ -354,8 +370,6 @@ contract Bridge {
   function lockAsset(address user, uint256 amount) internal {
     erc20.transferFrom(user, address(this), amount);
   }
-
-
 
   /**
    * @dev transfer the asset from contract to the user
