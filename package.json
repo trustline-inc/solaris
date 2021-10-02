@@ -11,7 +11,8 @@
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test --network hardhat",
-    "deploy:local": "npx hardhat --network local run ./scripts/deploy.ts"
+    "deploy:local": "npx hardhat --network local run ./scripts/deploy.ts",
+    "setup:local": "tsc && node dist/scripts/setup.js"
   },
   "keywords": [],
   "author": "",
@@ -27,7 +28,6 @@
     "chai-as-promised": "^7.1.1",
     "decimal.js": "^10.2.1",
     "dotenv": "^8.2.0",
-    "ethers": "^5.4.7",
     "hardhat": "^2.4.3",
     "hardhat-typechain": "^0.3.5",
     "husky": "^4.3.8",
@@ -39,5 +39,9 @@
     "typechain": "^3.0.0",
     "typescript": "^4.1.5",
     "web3": "^1.3.5"
+  },
+  "dependencies": {
+    "ripple-lib": "^1.10.0",
+    "ethers": "^5.4.7"
   }
 }
