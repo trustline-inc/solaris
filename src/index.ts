@@ -26,6 +26,7 @@ type Transfer = {
     value: BigNumber;
     currency: string;
   };
+  beneficiary: string;
 }
 
 /**
@@ -43,6 +44,7 @@ const CONTRACTS = {
   }
 }
 
-exports.transfer = ({ network, amount }: Transfer) => {
+export const transfer = ({ network, amount }: Transfer) => {
   console.log("Not implemented");
+  return true
 }

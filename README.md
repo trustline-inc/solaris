@@ -51,10 +51,9 @@ const result = await solaris.transfer({
     value: BigNumber.from("1000000000000000000"),
     currency: AUREI_ADDRESS
   },
+  // beneficiary is either an EVM- or XRPL-compatible address format
   beneficiary: "0xffC11262622D5069aBad729efe84a95C169d9c06"
 })
-
-
 ```
 
 ## Development
