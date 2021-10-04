@@ -115,7 +115,7 @@ contract Bridge {
   /////////////////////////////////////////
 
   constructor(string memory currCode, address erc20AssetAddress, address stateConnectorAddress) {
-    require(bytes(currCode).length != 0, "Currency Code can not be empty");
+    require(bytes(currCode).length != 0, "Currency code can not be empty");
     currencyCode = currCode;
     erc20 = IERC20(erc20AssetAddress);
     stateConnector = StateConnectorLike(stateConnectorAddress);
