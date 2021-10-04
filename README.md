@@ -50,7 +50,8 @@ const result = await solaris.transfer({
   amount: {
     value: BigNumber.from("1000000000000000000"),
     currency: AUREI_ADDRESS
-  }
+  },
+  beneficiary: "0xffC11262622D5069aBad729efe84a95C169d9c06"
 })
 
 
