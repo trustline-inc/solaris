@@ -4,7 +4,7 @@ import * as solaris from "../src/index"
 const AUREI_ADDRESS = "0x238f76EffC3F3d711847D48682304Bfaee357888"
 
 test('basic test', () => {
-  const result = solaris.transfer({
+  const result = solaris.initiateTransfer({
     network: {
       source: 0,
       destination: 1

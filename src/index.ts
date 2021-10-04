@@ -44,7 +44,33 @@ const CONTRACTS = {
   }
 }
 
-export const transfer = ({ network, amount }: Transfer) => {
-  console.log("Not implemented");
-  return true
+/**
+ * @function approve
+ * Requests user approval to transfer the ERC20 token
+ */
+export const approve = () => {
+  console.log("Not implemented")
 }
+
+/**
+ * @function initiateTransfer
+ * @param transferDetails An object containing transfer details
+ * Initiates a transfer between networks
+ */
+export const initiateTransfer = ({ network, amount, beneficiary }: Transfer) => {
+  // 1. Parse the transfer endpoints to determine the required actions
+  // - (Flare => XRPL): call `newIssuer` tx
+  // - (XRPL  => Flare): call `redeemptionAttempt`
+}
+
+/**
+ * @function verifyIssuance
+ * Called after initiating a transfer to from Flare
+ */
+export const verifyIssuance = () => {}
+
+/**
+ * @function redeemTokens
+ * Called after initiating a transfer to Flare
+ */
+export const redeemTokens = () => {}
