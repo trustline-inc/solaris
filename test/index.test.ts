@@ -1,10 +1,10 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { transfer } from "../src/index"
+import * as solaris from "../src/index"
 
 const AUREI_ADDRESS = "0x238f76EffC3F3d711847D48682304Bfaee357888"
 
 test('basic test', () => {
-  const result = transfer({
+  const result = solaris.transfer({
     network: {
       source: 0,
       destination: 1
