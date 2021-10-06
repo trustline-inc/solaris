@@ -64,6 +64,6 @@
     "web3": "^1.3.5"
   },
   "dependencies": {
-    "xrpl": "^2.0.0-beta.4"
+    "ripple-lib": "^1.10.0"
   }
 }

@@ -1,11 +1,12 @@
-import { BigNumber, Contract, utils } from "ethers"
+import { Contract, utils } from "ethers"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
+import XRPL from "./xrpl"
 
 /**
  * List of supported networks
  */
-export const networks = {
+export const networks: NetworkDict = {
   LOCAL: {
     url: "http://127.0.0.1:9650/ext/bc/C/rpc"
   },
@@ -19,14 +20,20 @@ export const networks = {
     url: "https://songbird.towolabs.com/rpc"
   },
   XRPL_MAINNET: {
-    url: "https://xrplcluster.com"
+    url: "wss://xrplcluster.com"
   },
   XRPL_TESTNET: {
-    url: "https://s.altnet.rippletest.net:51234"
+    url: "wss://s.altnet.rippletest.net"
   },
 }
 
-type ContractAddressList = {
+type NetworkDict = {
+  [key: string]: {
+    [key: string]: string
+  }
+}
+
+type ContractAddressDict = {
   [key: string]: {
     [key: string]: string
   }
@@ -36,7 +43,7 @@ type ContractAddressList = {
  * Contract addresses.
  * TODO: Access local deployment contracts from environment variables.
  */
-const CONTRACTS: ContractAddressList = {
+const CONTRACTS: ContractAddressDict = {
   BRIDGE: {
     LOCAL: "0x977F4CC7f10637171c68E1E33F76080b95EE21E8",
     COSTON: "",
@@ -57,22 +64,27 @@ const CONTRACTS: ContractAddressList = {
   }
 }
 
-type Network = {
+type Direction = {
   source: string;
   destination: string;
 }
 
+type XrplAccount = {
+  address: string;
+  secret: string;
+}
+
 export class Transfer {
-  private network: Network
-  private amount: BigNumber
+  private direction: Direction
+  private amount: number
   private token: string
-  private beneficiary: string
   private issuer: string
   private signer: any
+  private txID: string|boolean
 
   constructor(options?: any) {
     if (options === undefined) throw new Error("Missing required inputs")
-    this.network = options.network
+    this.direction = options.direction
     this.token = options.token
     this.amount = options.amount
     this.signer = options.signer
@@ -84,7 +96,7 @@ export class Transfer {
    */
   approve = async () => {
     const erc20Token = new Contract(this.token, ERC20ABI.abi, this.signer)
-    return await erc20Token.approve(CONTRACTS.BRIDGE[this.network.source], this.amount)
+    return await erc20Token.approve(CONTRACTS.BRIDGE[this.direction.source], this.amount)
   }
 
   /**
@@ -93,9 +105,9 @@ export class Transfer {
    * Initiates a transfer between networks
    */
   initiate = async (issuer?: string) => {
-    if (["LOCAL", "SONGBIRD", "FLARE"].includes(this.network.source)) {
+    if (["LOCAL", "SONGBIRD", "FLARE"].includes(this.direction.source)) {
       this.issuer = issuer
-      const bridge = new Contract(CONTRACTS.BRIDGE[this.network.source], BridgeABI.abi, this.signer)
+      const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
       return await bridge.createIssuer(this.issuer, this.amount, { gasLimit: 300000 })
     } else {
       // TODO: Originating from XRPL, call `redeemptionAttempt`
@@ -103,10 +115,39 @@ export class Transfer {
   }
 
   /**
+   * @function issueTokens
+   * @param network
+   * @param issuingAccount
+   * @param receivingAddress
+   */
+  issueTokens = async (network: string, issuingAccount: XrplAccount, receivingAccount: XrplAccount) => {
+    const xrpl = new XRPL(networks[network].url)
+    await xrpl.enableRippling(issuingAccount)
+    console.log("rippling enabled")
+    await xrpl.createTrustline(issuingAccount, receivingAccount)
+    console.log("trust line created")
+    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount, "PHI");
+    console.log("aurei issued")
+    await xrpl.setRegularKey(issuingAccount);
+    console.log("key disabled")
+  }
+
+  /**
    * @function verifyIssuance
    * Called after initiating a transfer to from Flare
    */
-  verifyIssuance = () => {}
+  verifyIssuance = async () => {
+    console.log("Verifying issuance")
+    const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
+    return await bridge.completeIssuance(
+      utils.id(String(this.txID)),
+      "source",
+      this.issuer,
+      0,
+      this.amount,
+      { gasLimit: 300000 }
+    )
+  }
 
   /**
    * @function redeemTokens
