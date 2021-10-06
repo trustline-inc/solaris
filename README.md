@@ -47,7 +47,7 @@ const wallet = new Wallet(
 
 // Create a transfer instance
 const transfer = new solaris.Transfer({
-  network: {
+  direction: {
     source: "LOCAL",
     destination: "XRPL_TESTNET"
   },

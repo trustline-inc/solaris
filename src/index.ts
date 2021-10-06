@@ -69,11 +69,6 @@ type Direction = {
   destination: string;
 }
 
-type XrplAccount = {
-  address: string;
-  secret: string;
-}
-
 export class Transfer {
   private direction: Direction
   private amount: number
@@ -108,7 +103,8 @@ export class Transfer {
     if (["LOCAL", "SONGBIRD", "FLARE"].includes(this.direction.source)) {
       this.issuer = issuer
       const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
-      return await bridge.createIssuer(this.issuer, this.amount, { gasLimit: 300000 })
+      const result = await bridge.createIssuer(this.issuer, this.amount, { gasLimit: 300000 })
+      return result
     } else {
       // TODO: Originating from XRPL, call `redeemptionAttempt`
     }
@@ -120,7 +116,7 @@ export class Transfer {
    * @param issuingAccount
    * @param receivingAddress
    */
-  issueTokens = async (network: string, issuingAccount: XrplAccount, receivingAccount: XrplAccount) => {
+  issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.enableRippling(issuingAccount)
     console.log("rippling enabled")

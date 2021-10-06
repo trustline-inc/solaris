@@ -1,10 +1,14 @@
 import { Contract, providers, Wallet } from "ethers";
+import axios from "axios"
+import { RippleAPI } from "ripple-lib"
 import * as solaris from "../src/index"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/test/IERC20.sol/IERC20.json"
 import StateConnectorABI from "../artifacts/contracts/test/StateConnector.sol/StateConnector.json"
 
-jest.setTimeout(35000)
+jest.setTimeout(45000)
+
+const api = new RippleAPI({ server: "wss://s.altnet.rippletest.net" })
 
 test('test issuance', async () => {
 
@@ -42,10 +46,18 @@ test('test issuance', async () => {
   let result = await tx.wait()
   expect(result.status).toBe(1)
 
-  const issuer = {
-    address: "rDrRpdT2zou736ZeEgguWpXx8u2cyQZog2",
-    secret: "shWqmk8z7hJ2i4PL7nMsV1WH8ZhZx"
-  }
+  const issuer = api.generateXAddress({ includeClassicAddress: true });
+  await axios({
+    url: "https://faucet.altnet.rippletest.net/accounts",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    data: {
+      destination: issuer.address,
+      amount: 1000
+    }
+  })
 
   const receiver = {
     address: "rDkNWp5gYs4mSt8pXYD6GVF85YK9XxmRKW",
@@ -53,11 +65,13 @@ test('test issuance', async () => {
   }
 
   tx = await transfer.initiate(issuer.address)
+  await tx.wait()
   let status = await bridge.getIssuerStatus(issuer.address);
   expect(status).toBe(1); // Statuses.PENDING === 1
 
   await transfer.issueTokens("XRPL_TESTNET", issuer, receiver)
-  await transfer.verifyIssuance()
+  tx = await transfer.verifyIssuance()
+  await tx.wait()
   status = await bridge.getIssuerStatus(issuer.address);
   expect(status).toBe(3); // Statuses.COMPLETED === 3
 });
