@@ -1,4 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import "@nomiclabs/hardhat-ethers"
 import { ethers } from "hardhat";
 
 // Import contract factory types

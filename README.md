@@ -40,67 +40,42 @@ yarn add @trustline/solaris
 import * as solaris from "@trustline/solaris"
 import { BigNumber } from "ethers"
 
-// ERC20 contract address
-const AUREI_ADDRESS = "0x238f76EffC3F3d711847D48682304Bfaee357888"
+const wallet = new Wallet(
+  '44b8de040dec19cf810efe64919b481e05e2ba643efe003223662f1626b114f0',
+  new providers.JsonRpcProvider('http://127.0.0.1:9650/ext/bc/C/rpc')
+)
 
-// Define the transfer object
-const transferDetails = {
+// Create a transfer instance
+const transfer = new solaris.Transfer({
   network: {
-    source: solaris.chains.XRP_LEDGER,
-    destination: solaris.chains.SONGBIRD
+    source: "LOCAL",
+    destination: "XRPL_TESTNET"
   },
-  amount: {
-    value: BigNumber.from("1000000000000000000"),
-    currency: AUREI_ADDRESS
-  },
-  issuer: "r4KrvxM7dA5gj9THgg7T3DKPETTghC1dqW",
-  beneficiary: "rf1VoGSXN5khRsZwt6kaSpYwiT2UfT3oSs"
-}
+  amount: 100,
+  token: "0x5406E1418060BA73820992F8Be98e4879Ce87925",
+  signer: wallet
+})
+
+let tx, result
 
 // Allow Solaris to transfer your tokens
-await solaris.approve(transferDetails)
+tx = await transfer.approve()
+result = await tx.wait()
 
 // Initiate the transfer
-const result = await solaris.initiateTransfer(transferDetails)
+const issuer = "r4KrvxM7dA5gj9THgg7T3DKPETTghC1dqW"
+tx = await transfer.initiate(issuer)
+result = await tx.wait()
 
 // Issue the tokens
-const txJSON = await solaris.issueCurrency(transferDetails)
+const receiver = "<address>"
+const txJSON = await transfer.issueCurrency(receiver)
 
 // Sign and submit the txJSON on the XRPL (not shown)
 
 // Verify the issuance
-await solaris.verifyIssuance(transferDetails)
-```
-
-**XRP Ledger Mainnet to Songbird**
-
-```javascript
-import * as solaris from "@trustline/solaris"
-import { BigNumber } from "ethers"
-
-// ERC20 contract address
-const AUREI_ADDRESS = "0x238f76EffC3F3d711847D48682304Bfaee357888"
-
-// Define the transfer object
-const transferDetails = {
-  network: {
-    source: solaris.chains.SONGBIRD,
-    destination: solaris.chains.XRP_LEDGER
-  },
-  amount: {
-    value: BigNumber.from("1000000000000000000"),
-    currency: AUREI_ADDRESS
-  },
-  beneficiary: "0xffC11262622D5069aBad729efe84a95C169d9c06"
-}
-
-// Initiate the transfer
-const txJSON = await solaris.initiateTransfer(transferDetails)
-
-// Sign and submit the txJSON on the XRPL (not shown)
-
-// Redeem the tokens
-await solaris.redeemTokens(transferDetails)
+tx = await transfer.verifyIssuance(transferDetails)
+result = await tx.wait()
 ```
 
 ## Development
