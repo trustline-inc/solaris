@@ -1,4 +1,6 @@
-import { BigNumber } from "ethers"
+import { BigNumber, Contract, utils } from "ethers"
+import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
+import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 
 /**
  * Canonical list of supported networks
@@ -26,6 +28,7 @@ type Transfer = {
     value: BigNumber;
     currency: string;
   };
+  issuer: string;
   beneficiary: string;
 }
 
@@ -46,10 +49,13 @@ const CONTRACTS = {
 
 /**
  * @function approve
+ * @param erc20Token The address of the ERC20 token contract
+ * @param signer The signer of the transaction
  * Requests user approval to transfer the ERC20 token
  */
-export const approve = () => {
-  console.log("Not implemented")
+export const approve = async (erc20Token: string, signer: any) => {
+  const contract = new Contract(erc20Token, ERC20ABI.abi, signer)
+  await contract.approve()
 }
 
 /**
@@ -57,10 +63,13 @@ export const approve = () => {
  * @param transferDetails An object containing transfer details
  * Initiates a transfer between networks
  */
-export const initiateTransfer = ({ network, amount, beneficiary }: Transfer) => {
-  // 1. Parse the transfer endpoints to determine the required actions
-  // - (Flare => XRPL): call `newIssuer` tx
-  // - (XRPL  => Flare): call `redeemptionAttempt`
+export const initiateTransfer = async ({ network, amount, issuer, beneficiary }: Transfer) => {
+  if (network.source in [Network.Local, Network.Songbird]) {
+    const bridge = new Contract(CONTRACTS.BRIDGE[Network.Local], BridgeABI.abi)
+    await bridge.createIssuer(issuer, utils.parseEther(amount.toString()))
+  } else {
+    // TODO: Originating from XRPL, call `redeemptionAttempt`
+  }
 }
 
 /**

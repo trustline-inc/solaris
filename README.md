@@ -53,6 +53,7 @@ const transferDetails = {
     value: BigNumber.from("1000000000000000000"),
     currency: AUREI_ADDRESS
   },
+  issuer: "r4KrvxM7dA5gj9THgg7T3DKPETTghC1dqW",
   beneficiary: "rf1VoGSXN5khRsZwt6kaSpYwiT2UfT3oSs"
 }
 
