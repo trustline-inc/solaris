@@ -21,8 +21,8 @@
     "compile": "npx hardhat compile",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test:package": "jest --config jest.config.js",
-    "test:hardhat": "npx hardhat test --network hardhat",
+    "test:module": "jest --config jest.config.js",
+    "test:contracts": "npx hardhat test --network hardhat",
     "deploy:local": "npx hardhat --network local run ./scripts/deploy.ts"
   },
   "keywords": [],

@@ -38,16 +38,19 @@ type ContractAddressList = {
  */
 const CONTRACTS: ContractAddressList = {
   BRIDGE: {
-    LOCAL: "0x0bdf455E317e93CB742d2EB4c392cb1f9B9550ce",
+    LOCAL: "0x977F4CC7f10637171c68E1E33F76080b95EE21E8",
     COSTON: "",
     SONGBIRD: "",
     FLARE: ""
   },
   ERC20: {
-    LOCAL: "0x5406E1418060BA73820992F8Be98e4879Ce87925"
+    LOCAL: "0xc665530C8C4e37D9e980AF454d5CF8F63f300FAb",
+    COSTON: "",
+    SONGBIRD: "",
+    FLARE: ""
   },
   STATE_CONNECTOR: {
-    LOCAL: "0xe417C2514D7755Bf604e7Aa3cA9EE21F075D57A6",
+    LOCAL: "0x8b145721fbf7B6cf2f36e29C4Dfb6eD6012007c6",
     COSTON: "",
     SONGBIRD: "",
     FLARE: ""
@@ -71,7 +74,7 @@ export class Transfer {
     if (options === undefined) throw new Error("Missing required inputs")
     this.network = options.network
     this.token = options.token
-    this.amount = utils.parseEther(options.amount.toString())
+    this.amount = options.amount
     this.signer = options.signer
   }
 
