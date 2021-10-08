@@ -81,3 +81,11 @@ result = await tx.wait()
 ## Development
 
 Install the node modules with `yarn` or `npm install`. Run a local [Flare](https://gitlab.com/flarenetwork/flare/-/tree/master) node and deploy the Bridge contract with the `deploy:local` script.
+
+## Publishing
+
+Update version in package.json and commit the change
+
+Create a tag that matches version for the commit and run git push --tags
+
+Create a new release for the tagged version
