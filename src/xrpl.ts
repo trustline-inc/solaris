@@ -100,7 +100,6 @@ export default class XRPL {
     const txID = response.id;
     const txBlob = response.signedTransaction;
     const result = await this.api.submit(txBlob);
-    console.log(result)
     const earliestLedgerVersion = latestLedgerVersion + 1;
     await this.api.disconnect();
     await this.api.disconnect();
@@ -135,7 +134,6 @@ export default class XRPL {
     const txID = response.id;
     const txBlob = response.signedTransaction;
     const result = await this.api.submit(txBlob);
-    console.log(result);
     const earliestLedgerVersion = latestLedgerVersion + 1;
     await this.api.disconnect();
     await this.api.disconnect();

@@ -6,7 +6,7 @@ async function main() {
   if (!process.env.FLARE_DIR)
     throw Error("Please set FLARE_DIR to your local Flare directory.");
   const { contracts } = await deployBridgeSystem();
-  console.log("Contracts deployed!");
+  console.info("Contracts deployed!");
 
   const addresses = [];
   let fileOutput = "";

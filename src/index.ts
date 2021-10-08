@@ -119,13 +119,9 @@ export class Transfer {
   issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.enableRippling(issuingAccount)
-    console.log("rippling enabled")
     await xrpl.createTrustline(issuingAccount, receivingAccount)
-    console.log("trust line created")
     this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount, "PHI");
-    console.log("aurei issued")
     await xrpl.setRegularKey(issuingAccount);
-    console.log("key disabled")
   }
 
   /**
@@ -133,7 +129,6 @@ export class Transfer {
    * Called after initiating a transfer to from Flare
    */
   verifyIssuance = async () => {
-    console.log("Verifying issuance")
     const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
     return await bridge.completeIssuance(
       utils.id(String(this.txID)),
@@ -149,5 +144,7 @@ export class Transfer {
    * @function redeemTokens
    * Called after initiating a transfer to Flare
    */
-  redeemTokens = () => {}
+  redeemTokens = () => {
+    // TODO
+  }
 }
