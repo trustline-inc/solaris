@@ -44,6 +44,7 @@ export class Transfer {
   private token: string
   private bridge: string
   private issuer: string
+  private currency: string
   private signer: any
   private txID: string|boolean
 
@@ -62,6 +63,7 @@ export class Transfer {
    */
   approve = async () => {
     const erc20Token = new Contract(this.token, ERC20ABI.abi, this.signer)
+    this.currency = await erc20Token.symbol()
     return await erc20Token.approve(this.bridge, this.amount)
   }
 
@@ -90,8 +92,8 @@ export class Transfer {
   issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.enableRippling(issuingAccount)
-    await xrpl.createTrustline(issuingAccount, receivingAccount)
-    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toNumber(), "PHI");
+    await xrpl.createTrustline(receivingAccount, issuingAccount, this.currency)
+    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toString(), this.currency);
     await xrpl.setRegularKey(issuingAccount);
   }
 
@@ -106,7 +108,8 @@ export class Transfer {
       "source",
       this.issuer,
       0,
-      this.amount,
+      // TODO: This should be passed as a BigNumber
+      this.amount.div("1000000000000000000").toString(),
       { gasLimit: 300000 }
     )
   }

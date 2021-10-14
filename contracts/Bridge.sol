@@ -9,7 +9,7 @@ interface StateConnectorLike {
     uint32 chainId,
     bytes32 txHash,
     bytes32 destinationHash,
-    uint64 amount,
+    uint256 amount,
     bytes32 currencyHash
   )
   external
@@ -421,7 +421,7 @@ contract Bridge {
     string calldata source,
     string calldata issuer,
     uint64 destinationTag,
-    uint64 amount
+    uint256 amount
   ) internal {
     bytes32 currencyHash = keccak256(abi.encodePacked(currencyCode, issuer));
 

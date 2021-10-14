@@ -1,5 +1,6 @@
 import { deployBridgeSystem } from "../lib/deployer"
 import axios from "axios"
+import { BigNumber } from "@ethersproject/bignumber"
 import { RippleAPI } from "ripple-lib"
 import * as solaris from "../src/index"
 import { Bridge, StateConnector, Erc20Token } from "../typechain";
@@ -18,6 +19,8 @@ let erc20Token: Erc20Token;
 // Wallets
 let owner: SignerWithAddress;
 
+const WAD = BigNumber.from("1000000000000000000")
+
 describe("Solaris", function () {
   beforeEach(async function () {
     const { contracts, signers } = await deployBridgeSystem();
@@ -30,8 +33,8 @@ describe("Solaris", function () {
     // Set wallets
     owner = signers.owner
 
-    await erc20Token.mint(signers.owner.address, 10000);
-    await erc20Token.approve(bridge.address, 10000);
+    await erc20Token.mint(signers.owner.address, BigNumber.from(10000).mul(WAD));
+    await erc20Token.approve(bridge.address, BigNumber.from(10000).mul(WAD));
     await stateConnector.setFinality(true);
   });
 
@@ -44,7 +47,7 @@ describe("Solaris", function () {
           source: "LOCAL",
           destination: "XRPL_TESTNET"
         },
-        amount: 100,
+        amount: BigNumber.from(100).mul(WAD),
         token: erc20Token.address,
         bridge: bridge.address,
         signer: owner

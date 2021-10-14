@@ -55,10 +55,10 @@ export default class XRPL {
     );
   }
 
-  createTrustline = async (to: any, from: any) => {
+  createTrustline = async (from: any, to: any, currency: string) => {
     await this.api.connect();
     const trustline = {
-      currency: "AUR",
+      currency,
       counterparty: to.address,
       limit: "100",
       qualityIn: 1,
@@ -81,7 +81,7 @@ export default class XRPL {
     );
   }
 
-  issueToken = async (issuingAccount: any, receivingAccount: any, amount: number, currencyCode: string) => {
+  issueToken = async (issuingAccount: any, receivingAccount: any, amount: string, currencyCode: string) => {
     await this.api.connect();
     const latestLedgerVersion = await this.api.getLedgerVersion();
     const preparedTx = await this.api.prepareTransaction({
@@ -89,7 +89,7 @@ export default class XRPL {
       Account: issuingAccount.address,
       Amount: {
         currency: currencyCode,
-        value: amount.toString(),
+        value: amount,
         issuer: issuingAccount.address,
       },
       Destination: receivingAccount.address,
@@ -97,40 +97,6 @@ export default class XRPL {
     });
     const maxLedgerVersion = preparedTx.instructions.maxLedgerVersion;
     const response = this.api.sign(preparedTx.txJSON, issuingAccount.secret);
-    const txID = response.id;
-    const txBlob = response.signedTransaction;
-    const result = await this.api.submit(txBlob);
-    const earliestLedgerVersion = latestLedgerVersion + 1;
-    await this.api.disconnect();
-    await this.api.disconnect();
-    return await this.validateTransaction(
-      txID,
-      earliestLedgerVersion,
-      maxLedgerVersion!
-    );
-  }
-
-  sendAurei = async (
-    from: any,
-    to: any,
-    issuer: any,
-    amount: number
-  ) => {
-    await this.api.connect();
-    const latestLedgerVersion = await this.api.getLedgerVersion();
-    const preparedTx = await this.api.prepareTransaction({
-      TransactionType: "Payment",
-      Account: from.address,
-      Amount: {
-        currency: "AUR",
-        value: amount.toString(),
-        issuer: issuer.address
-      },
-      Destination: to.address,
-      LastLedgerSequence: latestLedgerVersion + 15,
-    });
-    const maxLedgerVersion = preparedTx.instructions.maxLedgerVersion;
-    const response = this.api.sign(preparedTx.txJSON, from.secret);
     const txID = response.id;
     const txBlob = response.signedTransaction;
     const result = await this.api.submit(txBlob);
