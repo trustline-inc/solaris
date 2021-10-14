@@ -50,8 +50,6 @@ describe("Solaris", function () {
         signer: owner
       })
 
-      await stateConnector.setFinality(true);
-
       let tx = await transfer.approve()
       let result = await tx.wait()
       expect(result.status).to.equal(1)
