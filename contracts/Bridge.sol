@@ -421,7 +421,7 @@ contract Bridge {
     string calldata source,
     string calldata issuer,
     uint64 destinationTag,
-    uint256 amount
+    uint64 amount
   ) internal {
     bytes32 currencyHash = keccak256(abi.encodePacked(currencyCode, issuer));
 

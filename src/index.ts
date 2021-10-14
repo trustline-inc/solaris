@@ -93,6 +93,7 @@ export class Transfer {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.enableRippling(issuingAccount)
     await xrpl.createTrustline(receivingAccount, issuingAccount, this.currency)
+    // TODO: Make sure that the amount is 6 decimal places max
     this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toString(), this.currency);
     await xrpl.setRegularKey(issuingAccount);
   }
@@ -108,8 +109,7 @@ export class Transfer {
       "source",
       this.issuer,
       0,
-      // TODO: This should be passed as a BigNumber
-      this.amount.div("1000000000000000000").toString(),
+      this.amount.div("1000000000000000000"),
       { gasLimit: 300000 }
     )
   }
