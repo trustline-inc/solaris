@@ -1,4 +1,4 @@
-import { Contract, utils } from "ethers"
+import { BigNumber, Contract, utils } from "ethers"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 import XRPL from "./xrpl"
@@ -40,7 +40,7 @@ type Direction = {
 
 export class Transfer {
   private direction: Direction
-  private amount: number
+  private amount: BigNumber
   private token: string
   private bridge: string
   private issuer: string
@@ -91,13 +91,13 @@ export class Transfer {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.enableRippling(issuingAccount)
     await xrpl.createTrustline(issuingAccount, receivingAccount)
-    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount, "PHI");
+    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toNumber(), "PHI");
     await xrpl.setRegularKey(issuingAccount);
   }
 
   /**
    * @function verifyIssuance
-   * Called after initiating a transfer to from Flare
+   * Called after initiating a transfer from Flare
    */
   verifyIssuance = async () => {
     const bridge = new Contract(this.bridge, BridgeABI.abi, this.signer)
