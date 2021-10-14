@@ -85,7 +85,7 @@ const deployERC20 = async () => {
   return contracts;
 };
 
-const deployBridge = async () => {
+const deployBridge = async (erc20Address?: string) => {
   const signers = await getSigners();
 
   const stateConnectorFactory = (await ethers.getContractFactory(
@@ -101,7 +101,7 @@ const deployBridge = async () => {
   )) as BridgeFactory;
   contracts.bridge = await bridgeFactory.deploy(
       "AUR",
-      contracts.erc20.address,
+      (erc20Address === null || erc20Address === undefined) ? contracts.erc20.address : erc20Address,
       contracts.stateConnector.address
   );
   await contracts.bridge.deployed();
@@ -109,11 +109,16 @@ const deployBridge = async () => {
   return contracts;
 };
 
-const deployBridgeSystem = async () => {
+const deployBridgeSystem = async (erc20Address?: string) => {
   // Set signers
   const signers = await getSigners();
-  await deployERC20();
-  await deployBridge();
+
+  if (erc20Address) {
+    await deployBridge(erc20Address);
+  } else {
+    await deployERC20();
+    await deployBridge();
+  }
 
   return { contracts, signers };
 };

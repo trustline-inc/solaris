@@ -5,12 +5,15 @@ import * as fs from "fs";
 async function main() {
   if (!process.env.FLARE_DIR)
     throw Error("Please set FLARE_DIR to your local Flare directory.");
-  const { contracts } = await deployBridgeSystem();
+  const { contracts } = await deployBridgeSystem(process.env.TOKEN_ADDRESS);
   console.info("Contracts deployed!");
 
   const addresses = [];
   let fileOutput = "";
   for (let contract in contracts) {
+    if (process.env.TOKEN_ADDRESS && contract === "erc20") {
+      continue
+    }
     // Convert contract identifiers from PascalCase to UPPER_CASE
     const contractDisplayName = contract
       .split(/(?=[A-Z])/)

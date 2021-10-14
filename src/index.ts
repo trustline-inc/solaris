@@ -33,37 +33,6 @@ type NetworkDict = {
   }
 }
 
-type ContractAddressDict = {
-  [key: string]: {
-    [key: string]: string
-  }
-}
-
-/**
- * Contract addresses.
- * TODO: Access local deployment contracts from environment variables.
- */
-const CONTRACTS: ContractAddressDict = {
-  BRIDGE: {
-    LOCAL: "0x977F4CC7f10637171c68E1E33F76080b95EE21E8",
-    COSTON: "",
-    SONGBIRD: "",
-    FLARE: ""
-  },
-  ERC20: {
-    LOCAL: "0xc665530C8C4e37D9e980AF454d5CF8F63f300FAb",
-    COSTON: "",
-    SONGBIRD: "",
-    FLARE: ""
-  },
-  STATE_CONNECTOR: {
-    LOCAL: "0x8b145721fbf7B6cf2f36e29C4Dfb6eD6012007c6",
-    COSTON: "",
-    SONGBIRD: "",
-    FLARE: ""
-  }
-}
-
 type Direction = {
   source: string;
   destination: string;
@@ -73,6 +42,7 @@ export class Transfer {
   private direction: Direction
   private amount: number
   private token: string
+  private bridge: string
   private issuer: string
   private signer: any
   private txID: string|boolean
@@ -81,6 +51,7 @@ export class Transfer {
     if (options === undefined) throw new Error("Missing required inputs")
     this.direction = options.direction
     this.token = options.token
+    this.bridge = options.bridge
     this.amount = options.amount
     this.signer = options.signer
   }
@@ -91,7 +62,7 @@ export class Transfer {
    */
   approve = async () => {
     const erc20Token = new Contract(this.token, ERC20ABI.abi, this.signer)
-    return await erc20Token.approve(CONTRACTS.BRIDGE[this.direction.source], this.amount)
+    return await erc20Token.approve(this.bridge, this.amount)
   }
 
   /**
@@ -102,7 +73,7 @@ export class Transfer {
   initiate = async (issuer?: string) => {
     if (["LOCAL", "SONGBIRD", "FLARE"].includes(this.direction.source)) {
       this.issuer = issuer
-      const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
+      const bridge = new Contract(this.bridge, BridgeABI.abi, this.signer)
       const result = await bridge.createIssuer(this.issuer, this.amount, { gasLimit: 300000 })
       return result
     } else {
@@ -129,7 +100,7 @@ export class Transfer {
    * Called after initiating a transfer to from Flare
    */
   verifyIssuance = async () => {
-    const bridge = new Contract(CONTRACTS.BRIDGE[this.direction.source], BridgeABI.abi, this.signer)
+    const bridge = new Contract(this.bridge, BridgeABI.abi, this.signer)
     return await bridge.completeIssuance(
       utils.id(String(this.txID)),
       "source",
