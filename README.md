@@ -82,6 +82,12 @@ result = await tx.wait()
 
 Install the node modules with `yarn` or `npm install`. Run a local [Flare](https://gitlab.com/flarenetwork/flare/-/tree/master) node and deploy the Bridge contract with the `deploy:local` script.
 
+To deploy a local bridge, pass the ERC20 token address like this:
+
+```
+TOKEN_ADDRESS=<address> yarn run deploy:local
+```
+
 ## Publishing
 
 Update version in package.json and commit the change
