@@ -13,7 +13,7 @@ export default class XRPL {
     });
   }
 
-  enableRippling = async (account: any)  =>{
+  enableRippling = async (account: any)  => {
     await this.api.connect();
     const prepared = await this.api.prepareSettings(account.address, {
       defaultRipple: true,
@@ -110,7 +110,7 @@ export default class XRPL {
     );
   }
 
-  setRegularKey = async (account: any) => {
+  configureIssuerSettings = async (account: any) => {
     await this.api.connect();
     const preparedTx = await this.api.prepareSettings(account.address, {
       regularKey: ACCOUNT_ONE,

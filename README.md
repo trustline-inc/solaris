@@ -11,10 +11,21 @@ You can view the contract code in the [`contracts`](./contracts) folder. We will
 
 <!--ts-->
 
+- [Introduction](#introduction)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Development](#development)
 <!--te-->
+
+## Introduction
+
+In designed this SDK with these goals in mind:
+
+1. Ability to identify the current step in the issuance/redemption cycle.
+2. Decouple issuance and redemption cycles into separate processes.
+3. Prepare transactions for signing at each step of a process.
+4. Monitor for each step's transaction confirmation before proceeding.
+5. Verify that an issuer followed the correct procedure.
 
 ## Installation
 
@@ -60,22 +71,55 @@ let tx, result
 
 // Allow Solaris to transfer your tokens
 tx = await transfer.approve()
-result = await tx.wait()
+const receipt = await this.signer.sendTransaction(tx)
+const result = await receipt.wait()
+
+// Create accounts
+const issuer = api.generateXAddress({ includeClassicAddress: true });
+const receiver = api.generateXAddress({ includeClassicAddress: true });
+
+// Fund accounts
+await axios({
+  url: "https://faucet.altnet.rippletest.net/accounts",
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  data: {
+    destination: issuer.address,
+    amount: 1000
+  }
+})
+await axios({
+  url: "https://faucet.altnet.rippletest.net/accounts",
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  data: {
+    destination: receiver.address,
+    amount: 1000
+  }
+})
 
 // Initiate the transfer
 const issuer = "r4KrvxM7dA5gj9THgg7T3DKPETTghC1dqW"
 tx = await transfer.initiate(issuer)
-result = await tx.wait()
+const receipt = await this.signer.sendTransaction(tx)
+const result = await receipt.wait()
 
-// Issue the tokens
-const receiver = "<address>"
-const txJSON = await transfer.issueCurrency(receiver)
+// Statuses.PENDING === 1
+let status = await bridge.getIssuerStatus(issuer.address);
 
-// Sign and submit the txJSON on the XRPL (not shown)
+// Issue tokens on the XRPL
+await transfer.issueTokens("XRPL_TESTNET", issuer, receiver)
 
 // Verify the issuance
-tx = await transfer.verifyIssuance(transferDetails)
-result = await tx.wait()
+tx = await transfer.verifyIssuance()
+await tx.wait()
+
+// Statuses.COMPLETED === 3
+status = await bridge.getIssuerStatus(issuer.address);
 ```
 
 ## Development
