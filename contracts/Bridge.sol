@@ -25,8 +25,10 @@ contract Bridge {
   // Events
   /////////////////////////////////////////
 
+  event IssuancePending(string indexed issuer, uint256 amount);
+  event IssuanceCompleted(string indexed issuer, uint256 amount);
+  event IssuanceCanceled(string indexed issuer);
   event RedemptionCompleted(bytes32 indexed XrplTxId, uint256 amount);
-  event IssuanceCompleted(string issuer, uint256 amount);
 
   /////////////////////////////////////////
   // Modifiers
@@ -177,8 +179,8 @@ contract Bridge {
     issuers[issuer].amount = amount;
     issuers[issuer].sender = msg.sender;
     issuers[issuer].status = Status.PENDING;
-
     issuerList.push(issuer);
+    emit IssuancePending(issuer, amount);
   }
 
   /**
@@ -197,6 +199,7 @@ contract Bridge {
     );
     unLockAsset(msg.sender, issuers[issuer].amount);
     issuers[issuer].status = Status.CANCELED;
+    emit IssuanceCanceled(issuer);
   }
 
   /**
