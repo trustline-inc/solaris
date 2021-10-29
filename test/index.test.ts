@@ -8,6 +8,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as chai from "chai";
 import sinon from "sinon";
 import Token from "../src/token"
+import hre from "hardhat"
 const expect = chai.expect;
 
 const api = new RippleAPI({ server: "wss://s.altnet.rippletest.net" })
@@ -52,7 +53,8 @@ describe("Solaris", function () {
           amount: BigNumber.from(100).mul(WAD),
           tokenAddress: erc20Token.address,
           bridgeAddress: bridge.address,
-          wallet: owner
+          wallet: owner,
+          provider: hre.ethers.provider
         }, "ERC721")
       };
       expect(createTransfer).to.throw(Error, "Asset type not supported")
@@ -67,10 +69,11 @@ describe("Solaris", function () {
         amount: BigNumber.from(100).mul(WAD),
         tokenAddress: erc20Token.address,
         bridgeAddress: bridge.address,
-        wallet: owner
+        wallet: owner,
+        provider: hre.ethers.provider
       })
-
-      let tx = await transfer.initiateIssuance()
+      let tx = await transfer.approve()
+      console.log(tx)
       // let result = await tx.wait()
       // expect(result.status).to.equal(1)
 

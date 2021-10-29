@@ -4,7 +4,7 @@ import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 import XRPL from "./xrpl"
 import ERC20Bridge from "./flare/ERC20"
 import Flare from "./flare"
-import { JsonRpcProvider } from "@ethersproject/providers"
+import { network } from "hardhat"
 
 type tokenClassMapping = {
   [key: string]: any;
@@ -68,6 +68,7 @@ export class Transfer {
   private signer: any
   private txID: string|boolean
   private index: StepIndex = 0
+  private provider: any
 
   constructor(options?: any, tokenType: string = "ERC20") {
     if (options === undefined) throw new Error("Missing required inputs")
@@ -81,6 +82,7 @@ export class Transfer {
     this.signer = options.wallet
     this.tokenAddress = options.tokenAddress
     this.bridgeAddress = options.bridgeAddress
+    this.provider = options.provider
   }
 
   /**
@@ -99,13 +101,22 @@ export class Transfer {
    * @function approve
    * Requests user approval to transfer the ERC20 token
    */
-  private approve = async () => {
-    const erc20Token = new Contract(this.tokenAddress, ERC20ABI.abi, this.signer)
-    this.currency = await erc20Token.symbol()
-    const call = await erc20Token.approve(this.bridgeAddress, this.amount)
+  approve = async () => {
+    console.log(this.provider)
+    const erc20Token = new Contract(this.tokenAddress, ERC20ABI.abi, this.provider)
+
+    try {
+      console.log(await erc20Token.symbol())
+      this.currency = await erc20Token.symbol()
+      console.log("this.currency", this.currency)
+    } catch (error) {
+      console.log(error)
+    }
+
+    const data = erc20Token.interface.encodeFunctionData("approve", [this.bridgeAddress, this.amount])
     const transaction = {
-      data: call.data,
-      to: erc20Token.address,
+      data,
+      to: this.tokenAddress,
       from: this.signer.address
     }
     return transaction
@@ -116,7 +127,7 @@ export class Transfer {
    * @param issuer The address of the issuing account
    * Initiates a transfer between networks
    */
-  private createIssuer = async (issuer?: string) => {
+  createIssuer = async (issuer?: string) => {
     this.issuer = issuer
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
     return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
@@ -128,7 +139,7 @@ export class Transfer {
    * @param issuingAccount
    * @param receivingAddress
    */
-  private issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
+  issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     // TODO: Make sure that the amount is 6 decimal places max
     this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toString(), this.currency);
@@ -139,7 +150,7 @@ export class Transfer {
    * @param network
    * @param issuingAccount
    */
-  private configureIssuerSettings = async (network: string, issuingAccount: any) => {
+  configureIssuerSettings = async (network: string, issuingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.configureIssuerSettings(issuingAccount);
   }
@@ -150,7 +161,7 @@ export class Transfer {
    * @param issuingAccount
    * @param receivingAddress
    */
-  private createReceiverTrustLine = async (network: string, issuingAccount: any, receivingAccount: any) => {
+  createReceiverTrustLine = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
     await xrpl.createTrustline(receivingAccount, issuingAccount, this.currency)
   }
@@ -159,7 +170,7 @@ export class Transfer {
    * @function verifyIssuance
    * Called after initiating a transfer from Flare
    */
-  private verifyIssuance = async () => {
+  verifyIssuance = async () => {
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
     return await bridge.completeIssuance(
       utils.id(String(this.txID)),
@@ -175,7 +186,7 @@ export class Transfer {
    * @function redeemTokens
    * Called after initiating a transfer to Flare
    */
-  private redeemTokens = () => {
+  redeemTokens = () => {
     // TODO
   }
 
