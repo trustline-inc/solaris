@@ -1,10 +1,9 @@
-import { BigNumber, Contract, ethers, utils } from "ethers"
+import { BigNumber, Contract, utils } from "ethers"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 import XRPL from "./xrpl"
 import ERC20Bridge from "./flare/ERC20"
 import Flare from "./flare"
-import { network } from "hardhat"
 
 type tokenClassMapping = {
   [key: string]: any;
@@ -102,24 +101,9 @@ export class Transfer {
    * Requests user approval to transfer the ERC20 token
    */
   approve = async () => {
-    console.log(this.provider)
     const erc20Token = new Contract(this.tokenAddress, ERC20ABI.abi, this.provider)
-
-    try {
-      console.log(await erc20Token.symbol())
-      this.currency = await erc20Token.symbol()
-      console.log("this.currency", this.currency)
-    } catch (error) {
-      console.log(error)
-    }
-
-    const data = erc20Token.interface.encodeFunctionData("approve", [this.bridgeAddress, this.amount])
-    const transaction = {
-      data,
-      to: this.tokenAddress,
-      from: this.signer.address
-    }
-    return transaction
+    this.currency = await erc20Token.symbol()
+    return erc20Token.interface.encodeFunctionData("approve", [this.bridgeAddress, this.amount])
   }
 
   /**
@@ -129,7 +113,7 @@ export class Transfer {
    */
   createIssuer = async (issuer?: string) => {
     this.issuer = issuer
-    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
     return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
   }
 

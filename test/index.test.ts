@@ -6,8 +6,6 @@ import * as solaris from "../src/index"
 import { Bridge, StateConnector, Erc20Token } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as chai from "chai";
-import sinon from "sinon";
-import Token from "../src/token"
 import hre from "hardhat"
 const expect = chai.expect;
 
@@ -61,45 +59,47 @@ describe("Solaris", function () {
     })
 
     it("issues tokens", async () => {
+      const amount = BigNumber.from(100).mul(WAD)
       const transfer = new solaris.Transfer({
         direction: {
           source: "LOCAL",
           destination: "XRPL_TESTNET"
         },
-        amount: BigNumber.from(100).mul(WAD),
+        amount,
         tokenAddress: erc20Token.address,
         bridgeAddress: bridge.address,
         wallet: owner,
         provider: hre.ethers.provider
       })
-      let tx = await transfer.approve()
-      console.log(tx)
-      // let result = await tx.wait()
-      // expect(result.status).to.equal(1)
+      let data = await transfer.approve()
+      let transactionResponse = await erc20Token.approve(bridge.address, amount);
+      expect(data).to.equal(transactionResponse.data)
 
-      // const issuer = api.generateXAddress({ includeClassicAddress: true });
-      // await axios({
-      //   url: "https://faucet.altnet.rippletest.net/accounts",
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json"
-      //   },
-      //   data: {
-      //     destination: issuer.address,
-      //     amount: 1000
-      //   }
-      // })
+      // Create new issuing account
+      const issuer = api.generateXAddress({ includeClassicAddress: true });
+      await axios({
+        url: "https://faucet.altnet.rippletest.net/accounts",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        data: {
+          destination: issuer.address,
+          amount: 1000
+        }
+      })
+
+      data = await transfer.createIssuer(issuer.address)
+      transactionResponse = await bridge.createIssuer(issuer.address, amount);
+      expect(data).to.equal(transactionResponse.data)
+
+      let status = await bridge.getIssuerStatus(issuer.address);
+      expect(status).to.equal(1); // Statuses.PENDING === 1
 
       // const receiver = {
       //   address: "rDkNWp5gYs4mSt8pXYD6GVF85YK9XxmRKW",
       //   secret: "sptH3HxFUVghwQJHWnADnQwPY457o"
       // }
-
-      // tx = await transfer.initiate(issuer.address)
-      // result = await tx.wait()
-
-      // let status = await bridge.getIssuerStatus(issuer.address);
-      // expect(status).to.equal(1); // Statuses.PENDING === 1
 
       // /**
       //  * TODO: We may be able to stub the XRPL issuance to make the test faster
