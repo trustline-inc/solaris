@@ -1,4 +1,4 @@
-import { BigNumber, Contract, utils } from "ethers"
+import { BigNumber, Contract, utils, Signer } from "ethers"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 import XRPL from "./xrpl"
@@ -56,7 +56,17 @@ type Step = {
   method: (index: StepIndex) => {}
 }
 
+export interface TransferOptions {
+  direction: Direction;
+  amount: BigNumber;
+  signer: Signer;
+  tokenAddress: string;
+  bridgeAddress: string;
+  provider: any; // TODO: add explicit type
+}
+
 export class Transfer {
+  private readonly options: TransferOptions
   private flare: Flare
   private direction: Direction
   private amount: BigNumber
@@ -64,21 +74,22 @@ export class Transfer {
   private bridgeAddress: string
   private issuer: string
   private currency: string
-  private signer: any
+  private signer: Signer
   private txID: string|boolean
   private index: StepIndex = 0
   private provider: any
 
-  constructor(options?: any, tokenType: string = "ERC20") {
+  constructor(options?: TransferOptions, tokenType: string = "ERC20") {
+    this.options = options
     if (options === undefined) throw new Error("Missing required inputs")
     if (tokenClassMapping[tokenType] === undefined) {
       throw new Error("Asset type not supported")
     }
     const Token = tokenClassMapping[tokenType]
-    this.flare = new Token(options.bridgeAddress, options.tokenAddress, options.wallet)
+    this.flare = new Token(options.bridgeAddress, options.tokenAddress, options.signer)
     this.direction = options.direction
     this.amount = options.amount
-    this.signer = options.wallet
+    this.signer = options.signer
     this.tokenAddress = options.tokenAddress
     this.bridgeAddress = options.bridgeAddress
     this.provider = options.provider
