@@ -48,14 +48,6 @@ type Direction = {
   destination: string;
 }
 
-type CycleType = string
-type StepIndex = number
-type Step = {
-  title: string;
-  chain: string;
-  method: (index: StepIndex) => {}
-}
-
 export interface TransferOptions {
   direction: Direction;
   amount: BigNumber;
@@ -76,7 +68,6 @@ export class Transfer {
   private currency: string
   private signer: Signer
   private txID: string|boolean
-  private index: StepIndex = 0
   private provider: any
 
   constructor(options?: TransferOptions, tokenType: string = "ERC20") {
@@ -93,18 +84,6 @@ export class Transfer {
     this.tokenAddress = options.tokenAddress
     this.bridgeAddress = options.bridgeAddress
     this.provider = options.provider
-  }
-
-  /**
-   * @function initiateIssuance
-   * Initiates a transfer from Flare
-   */
-  initiateIssuance = async () => {
-    let result = await this.TRANSFER_STEPS.getStep("ISSUANCE", 0).method.call(this)
-    console.log(result)
-
-    result = await this.TRANSFER_STEPS.getStep("ISSUANCE", 1).method.call(this, "r4KrvxM7dA5gj9THgg7T3DKPETTghC1dqW")
-    console.log(result)
   }
 
   /**
@@ -141,24 +120,24 @@ export class Transfer {
   }
 
   /**
-   * @function configureIssuerSettings
+   * @function checkIssuerSettings
    * @param network
    * @param issuingAccount
    */
-  configureIssuerSettings = async (network: string, issuingAccount: any) => {
+  checkIssuerSettings = async (network: string, issuingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
-    await xrpl.configureIssuerSettings(issuingAccount);
+    // TODO
   }
 
   /**
-   * @function createReceiverTrustLine
+   * @function checkReceiverTrustLine
    * @param network
    * @param issuingAccount
    * @param receivingAddress
    */
-  createReceiverTrustLine = async (network: string, issuingAccount: any, receivingAccount: any) => {
+  checkReceiverTrustLine = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
-    await xrpl.createTrustline(receivingAccount, issuingAccount, this.currency)
+    // TODO
   }
 
   /**
@@ -167,13 +146,15 @@ export class Transfer {
    */
   verifyIssuance = async () => {
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
-    return await bridge.completeIssuance(
-      utils.id(String(this.txID)),
-      "source",
-      this.issuer,
-      0,
-      this.amount.div("1000000000000000000"),
-      { gasLimit: 300000 }
+    return bridge.interface.encodeFunctionData(
+      "completeIssuance",
+      [
+        utils.id(String(this.txID)),
+        "source",
+        this.issuer,
+        0,
+        this.amount.div("1000000000000000000")
+      ]
     )
   }
 
@@ -183,48 +164,5 @@ export class Transfer {
    */
   redeemTokens = () => {
     // TODO
-  }
-
-  // Each step involves preparing a transaction for signing.
-  TRANSFER_STEPS: {
-    [key: string]: any;
-    getStep(cycleType: CycleType, index: StepIndex): Step;
-  } = {
-    getStep: (cycleType: CycleType, index: StepIndex): Step => {
-      return this.TRANSFER_STEPS[cycleType][index]
-    },
-    ISSUANCE: [
-      {
-        title: "APPROVE",
-        chain: "FLARE",
-        method: this.approve
-      },
-      {
-        title: "CREATE_ISSUER",
-        chain: "FLARE",
-        method: this.createIssuer
-      },
-      {
-        title: "CREATE_RECEIVER_TRUST_LINE",
-        chain: "XRPL",
-        method: this.createReceiverTrustLine
-      },
-      {
-        title: "ISSUE_TOKENS",
-        chain: "XRPL",
-        method: this.issueTokens
-      },
-      {
-        title: "CONFIGURE_ISSUER_SETTINGS",
-        chain: "XRPL",
-        method: this.configureIssuerSettings
-      },
-      {
-        title: "VERIFY_ISSUANCE",
-        chain: "FLARE",
-        method: this.verifyIssuance
-      }
-    ],
-    REDEMPTION: []
   }
 }
