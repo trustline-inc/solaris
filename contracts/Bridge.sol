@@ -25,10 +25,10 @@ contract Bridge {
   // Events
   /////////////////////////////////////////
 
-  event IssuancePending(string indexed issuer, uint256 amount);
-  event IssuanceCompleted(string indexed issuer, uint256 amount);
-  event IssuanceCanceled(string indexed issuer);
-  event RedemptionCompleted(bytes32 indexed XrplTxId, uint256 amount);
+  event IssuancePending(string issuer, uint256 amount);
+  event IssuanceCompleted(string issuer, uint256 amount);
+  event IssuanceCanceled(string issuer);
+  event RedemptionCompleted(bytes32 XrplTxId, uint256 amount);
 
   /////////////////////////////////////////
   // Modifiers
