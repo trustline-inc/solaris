@@ -67,7 +67,7 @@ export class Transfer {
   private issuer: string
   private currency: string
   private signer: Signer
-  private txID: string|boolean
+  private txID: string
   private provider: any
 
   constructor(options?: TransferOptions, tokenType: string = "ERC20") {
@@ -108,18 +108,6 @@ export class Transfer {
   }
 
   /**
-   * @function issueTokens
-   * @param network
-   * @param issuingAccount
-   * @param receivingAddress
-   */
-  issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
-    const xrpl = new XRPL(networks[network].url)
-    // TODO: Make sure that the amount is 6 decimal places max
-    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toString(), this.currency);
-  }
-
-  /**
    * @function checkIssuerSettings
    * @param network
    * @param issuingAccount
@@ -144,12 +132,13 @@ export class Transfer {
    * @function verifyIssuance
    * Called after initiating a transfer from Flare
    */
-  verifyIssuance = async () => {
+  verifyIssuance = async (txID: string) => {
+    this.txID = txID
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
     return bridge.interface.encodeFunctionData(
       "completeIssuance",
       [
-        utils.id(String(this.txID)),
+        utils.id(txID),
         "source",
         this.issuer,
         0,
