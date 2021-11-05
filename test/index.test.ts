@@ -1,3 +1,4 @@
+import { utils } from "ethers"
 import { deployBridgeSystem } from "../lib/deployer"
 import axios from "axios"
 import { BigNumber } from "@ethersproject/bignumber"
@@ -51,14 +52,14 @@ describe("Solaris", function () {
           amount: BigNumber.from(100).mul(WAD),
           tokenAddress: erc20Token.address,
           bridgeAddress: bridge.address,
-          wallet: owner,
+          signer: owner,
           provider: hre.ethers.provider
         }, "ERC721")
       };
       expect(createTransfer).to.throw(Error, "Asset type not supported")
     })
 
-    it("issues tokens", async () => {
+    it("completes issuance", async () => {
       const amount = BigNumber.from(100).mul(WAD)
       const transfer = new solaris.Transfer({
         direction: {
@@ -68,7 +69,7 @@ describe("Solaris", function () {
         amount,
         tokenAddress: erc20Token.address,
         bridgeAddress: bridge.address,
-        wallet: owner,
+        signer: owner,
         provider: hre.ethers.provider
       })
       let data = await transfer.approve()
@@ -96,24 +97,84 @@ describe("Solaris", function () {
       let status = await bridge.getIssuerStatus(issuer.address);
       expect(status).to.equal(1); // Statuses.PENDING === 1
 
-      // const receiver = {
-      //   address: "rDkNWp5gYs4mSt8pXYD6GVF85YK9XxmRKW",
-      //   secret: "sptH3HxFUVghwQJHWnADnQwPY457o"
-      // }
+      const receiver = {
+        address: "rDkNWp5gYs4mSt8pXYD6GVF85YK9XxmRKW",
+        secret: "sptH3HxFUVghwQJHWnADnQwPY457o"
+      }
 
-      // /**
-      //  * TODO: We may be able to stub the XRPL issuance to make the test faster
-      //  */
-      // // sinon.stub(transfer, "issueTokens").returns(
-      // //   new Promise((resolve) => { resolve() })
-      // // );
+      // Create trust line from receiver to issuer
 
-      // await transfer.issueTokens("XRPL_TESTNET", issuer, receiver)
-      // tx = await transfer.verifyIssuance()
-      // await tx.wait()
+      let tx = {
+        currency: "AUR",
+        counterparty: issuer.address,
+        limit: "999999999",
+        qualityIn: 1,
+        qualityOut: 1,
+        ripplingDisabled: false,
+        frozen: false,
+        memos: [
+          {
+            type: "test",
+            format: "text/plain",
+            data: "Trustline App"
+          }
+        ]
+      }
 
-      // status = await bridge.getIssuerStatus(issuer.address);
-      // expect(status).to.equal(3); // Statuses.COMPLETED === 3
+      await api.connect()
+      const prepared = await api.prepareTrustline(receiver.address, tx)
+      const signed = api.sign(prepared.txJSON, receiver.secret).signedTransaction
+      const res = await api.submit(signed)
+      console.log("Trust line transaction submitted.")
+      console.log(res.resultCode, res.resultMessage)
+
+      setTimeout(() => { console.log("done") }, 3000)
+
+      // Issue tokens to receiver
+
+      console.log("value in drops", api.xrpToDrops(amount.div(WAD).toString()))
+
+      let latestLedgerVersion = await api.getLedgerVersion()
+      const preparedTx = await api.prepareTransaction({
+        TransactionType: "Payment",
+        Account: issuer.address,
+        Amount: {
+          currency: "AUR",
+          value: api.xrpToDrops(amount.div(WAD).toString()),
+          issuer: issuer.address
+        },
+        Destination: receiver.address,
+        LastLedgerSequence: latestLedgerVersion + 15
+      })
+      const response = api.sign(preparedTx.txJSON, issuer.secret)
+      const txID = response.id
+      console.log("Issuance txID:", txID)
+      const txBlob = response.signedTransaction
+      latestLedgerVersion = await api.getLedgerVersion()
+      const result = await api.submit(txBlob)
+      console.log("Tentative result code:", result.resultCode)
+      console.log("Tentative result message:", result.resultMessage)
+
+      setTimeout(() => { console.log("done") }, 3000)
+
+      data = await transfer.verifyIssuance(txID)
+      console.log("data", data)
+      console.log("amount", amount.div(WAD).toString())
+      transactionResponse = await bridge.completeIssuance(
+        utils.id(txID),
+        "source",
+        issuer.address,
+        0,
+        Number(amount.div(WAD))
+      )
+      expect(data).to.equal(transactionResponse.data)
+      console.log("done")
+
+      status = await bridge.getIssuerStatus(issuer.address);
+      expect(status).to.equal(3); // Statuses.COMPLETED === 3
+
+      await api.disconnect()
+      await api.disconnect()
     });
 
     it("redeems tokens", async () => {});

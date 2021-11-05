@@ -206,7 +206,7 @@ contract Bridge {
    * @notice Prove that the XRPL issuance completed so that the issuer can be validated.
    * @dev Marks the status of the issuer as COMPLETED
    * @param txHash the XRPL payment tx ID
-   * @param source the address of the source - @shine2lay to clarify
+   * @param source the address of the source
    * @param issuer the address of the issuer
    * @param destinationTag the destination tag
    * @param amount the amount issued

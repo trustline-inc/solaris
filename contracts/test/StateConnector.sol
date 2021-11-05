@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-contract StateConnector{
+contract StateConnector {
   bool finalityToReturn;
 
   function setFinality(bool newFinality) public {
