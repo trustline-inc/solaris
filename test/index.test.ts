@@ -91,7 +91,7 @@ describe("Solaris", function () {
       })
 
       data = await transfer.createIssuer(issuer.address)
-      transactionResponse = await bridge.createIssuer(issuer.address, amount);
+      transactionResponse = await bridge.createIssuer(issuer.address, amount.div(WAD));
       expect(data).to.equal(transactionResponse.data)
 
       let status = await bridge.getIssuerStatus(issuer.address);
@@ -157,7 +157,7 @@ describe("Solaris", function () {
 
       setTimeout(() => { console.log("done") }, 3000)
 
-      data = await transfer.verifyIssuance(txID)
+      data = await transfer.verifyIssuance(txID, issuer.address)
       console.log("data", data)
       console.log("amount", amount.div(WAD).toString())
       transactionResponse = await bridge.completeIssuance(
@@ -165,10 +165,9 @@ describe("Solaris", function () {
         "source",
         issuer.address,
         0,
-        Number(amount.div(WAD))
+        amount.div(WAD)
       )
       expect(data).to.equal(transactionResponse.data)
-      console.log("done")
 
       status = await bridge.getIssuerStatus(issuer.address);
       expect(status).to.equal(3); // Statuses.COMPLETED === 3

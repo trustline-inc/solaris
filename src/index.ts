@@ -104,7 +104,7 @@ export class Transfer {
   createIssuer = async (issuer?: string) => {
     this.issuer = issuer
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
-    return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
+    return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, Number(this.amount.div("1000000000000000000"))])
   }
 
   /**
@@ -130,9 +130,9 @@ export class Transfer {
 
   /**
    * @function verifyIssuance
-   * Called after initiating a transfer from Flare
+   * Called after initiating a transfer from Flare. The amount is converted from a BN to an integer.
    */
-  verifyIssuance = async (txID: string) => {
+  verifyIssuance = async (txID: string, issuerAddress: string) => {
     this.txID = txID
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
     return bridge.interface.encodeFunctionData(
@@ -140,9 +140,9 @@ export class Transfer {
       [
         utils.id(txID),
         "source",
-        this.issuer,
+        issuerAddress,
         0,
-        this.amount.div("1000000000000000000")
+        Number(this.amount.div("1000000000000000000"))
       ]
     )
   }

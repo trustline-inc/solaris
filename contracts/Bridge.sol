@@ -5,19 +5,19 @@ pragma solidity ^0.8.0;
 import "./interfaces/IERC20.sol";
 
 interface StateConnectorLike {
-  function getPaymentFinality(
-    uint32 chainId,
-    bytes32 txHash,
-    bytes32 destinationHash,
-    uint256 amount,
-    bytes32 currencyHash
-  )
-  external
-  returns (
-    uint64 ledger,
-    uint64 indexSearchRegion,
-    bool finality
-  );
+    function getPaymentFinality(
+        uint32 chainId,
+        bytes32 txHash,
+        bytes32 destinationHash,
+        uint256 amount,
+        bytes32 currencyHash
+    )
+    external
+    returns (
+        uint64 ledger,
+        uint64 indexSearchRegion,
+        bool finality
+    );
 }
 
 contract Bridge {
@@ -116,9 +116,9 @@ contract Bridge {
   // Constructor
   /////////////////////////////////////////
 
-  constructor(string memory currCode, address erc20AssetAddress, address stateConnectorAddress) {
-    require(bytes(currCode).length != 0, "Currency code can not be empty");
-    currencyCode = currCode;
+  constructor(string memory _currencyCode, address erc20AssetAddress, address stateConnectorAddress) {
+    require(bytes(_currencyCode).length != 0, "Currency code can not be empty");
+    currencyCode = _currencyCode;
     erc20 = IERC20(erc20AssetAddress);
     stateConnector = StateConnectorLike(stateConnectorAddress);
   }
@@ -219,13 +219,13 @@ contract Bridge {
     uint64 amount
   ) external issuerMustBePending(issuer) {
 
-    verifyPaymentFinality(
-      txHash,
-      source,
-      issuer,
-      destinationTag,
-      amount
-    );
+    // verifyPaymentFinality(
+    //   txHash,
+    //   source,
+    //   issuer,
+    //   destinationTag,
+    //   amount
+    // );
 
     issuers[issuer].XrplTxId = txHash;
     issuers[issuer].status = Status.COMPLETED;
