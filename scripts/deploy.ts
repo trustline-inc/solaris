@@ -30,6 +30,7 @@ async function main() {
 
   fs.writeFileSync(".env", fileOutput);
   console.table(addresses);
+  console.info(`Contract addresses written to ${process.cwd()}/.env`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
