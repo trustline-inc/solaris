@@ -101,7 +101,8 @@ contract Bridge {
 
   IERC20 public erc20;
   StateConnectorLike public stateConnector;
-  string public currencyCode; // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
+  // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
+  string public currencyCode;
 
   // redemption hash keccak256(source, issuer, destinationTag)
   mapping(bytes32 => Reservation) public reservations;
@@ -116,7 +117,11 @@ contract Bridge {
   // Constructor
   /////////////////////////////////////////
 
-  constructor(string memory _currencyCode, address erc20AssetAddress, address stateConnectorAddress) {
+  constructor(
+    string memory _currencyCode,
+    address erc20AssetAddress,
+    address stateConnectorAddress
+  ) {
     require(bytes(_currencyCode).length != 0, "Currency code can not be empty");
     currencyCode = _currencyCode;
     erc20 = IERC20(erc20AssetAddress);
@@ -292,7 +297,7 @@ contract Bridge {
     // Can't make another reservation while the reservation is already activated.
     require(
       block.timestamp >= reservations[redemptionHash].createdAt + 7200,
-      "The previous redemption reservation for these parameters was submitted less than 2 hours ago."
+      "The previous redemption reservation for these params was submitted less than 2 hours ago."
     );
 
     reservations[redemptionHash].redeemer = msg.sender;
@@ -308,7 +313,8 @@ contract Bridge {
   }
 
   /**
-   * @notice Proves that trustless issued currency was redeemed on the XRPL and sends an equivalent amount to msg.sender.
+   * @notice Proves that trustless issued currency was redeemed on the XRPL.
+   * Sends an equivalent amount to msg.sender.
    * @param txID the payment tx ID from the XRPL
    * @param source the source address in the tx
    * @param issuer the issuer address of the tx
@@ -369,8 +375,8 @@ contract Bridge {
   }
 
   /**
-   * TODO: The final step for trustless issued currency is proving that the issuing account is blackholed.
-   * Once this is proven, the issuing address can be verified.
+   * TODO: The final step for trustless issued currency is proving that the issuing account is
+   * blackholed. Once this is proven, the issuing address can be verified.
    *
    * FLARE TEAM MUST IMPLEMENT STATE CONNECTOR FUNCTION TO VERIFY BLACKHOLED ISSUERS.
    **/
@@ -386,7 +392,9 @@ contract Bridge {
    **/
   function removeVerifiedIssuer(string memory issuer) internal {
     for (uint256 i = 0; i < verifiedIssuerList.length; i++) {
-      if (keccak256(abi.encodePacked(verifiedIssuerList[i])) == keccak256(abi.encodePacked(issuer))) {
+      if (
+        keccak256(abi.encodePacked(verifiedIssuerList[i])) == keccak256(abi.encodePacked(issuer))
+      ) {
         verifiedIssuerList[i] = verifiedIssuerList[verifiedIssuerList.length - 1];
         verifiedIssuerList.pop();
         break;
