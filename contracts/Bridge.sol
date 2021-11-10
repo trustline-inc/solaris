@@ -28,7 +28,7 @@ contract Bridge {
   event IssuancePending(string issuer, uint256 amount);
   event IssuanceCompleted(string issuer, uint256 amount);
   event IssuanceCanceled(string issuer);
-  event RedemptionCompleted(bytes32 XrplTxId, uint256 amount);
+  event RedemptionCompleted(bytes32 xrplTxId, uint256 amount);
 
   /////////////////////////////////////////
   // Modifiers
@@ -95,7 +95,7 @@ contract Bridge {
   struct Issuer {
     uint256 amount;
     address sender;
-    bytes32 XrplTxId;
+    bytes32 xrplTxId;
     Status status;
   }
 
@@ -232,7 +232,7 @@ contract Bridge {
     //   amount
     // );
 
-    issuers[issuer].XrplTxId = txHash;
+    issuers[issuer].xrplTxId = txHash;
     issuers[issuer].status = Status.COMPLETED;
     verifiedIssuerList.push(issuer);
     emit IssuanceCompleted(issuer, amount);
@@ -257,7 +257,7 @@ contract Bridge {
     uint64 amount
   ) external {
     require(
-      issuers[issuer].XrplTxId != txHash,
+      issuers[issuer].xrplTxId != txHash,
       "The provided transaction has already been proved."
     );
 
