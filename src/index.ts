@@ -104,7 +104,7 @@ export class Transfer {
   createIssuer = async (issuer?: string) => {
     this.issuer = issuer
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
-    return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, Number(this.amount.div("1000000000000000000"))])
+    return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
   }
 
   /**
@@ -142,7 +142,7 @@ export class Transfer {
         "source",
         issuerAddress,
         0,
-        Number(this.amount.div("1000000000000000000"))
+        Number(this.amount.div("1000000000000000000")) // TODO: Confirm the expected precision.
       ]
     )
   }
