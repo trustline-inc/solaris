@@ -202,7 +202,7 @@ contract Bridge {
       issuers[issuer].sender == msg.sender,
       "Only the originating account can cancel this issuer."
     );
-    unLockAsset(msg.sender, issuers[issuer].amount);
+    unlockAsset(msg.sender, issuers[issuer].amount);
     issuers[issuer].status = Status.CANCELED;
     emit IssuanceCanceled(issuer);
   }
@@ -273,7 +273,7 @@ contract Bridge {
     uint256 amountToSend = issuers[issuer].amount;
     issuers[issuer].amount = 0;
     removeVerifiedIssuer(issuer);
-    unLockAsset(msg.sender, amountToSend);
+    unlockAsset(msg.sender, amountToSend);
   }
 
   /**
@@ -356,7 +356,7 @@ contract Bridge {
       amount
     );
     issuers[issuer].amount = issuers[issuer].amount - amount;
-    unLockAsset(destAddress, amount);
+    unlockAsset(destAddress, amount);
     redemptions[txID] = Redemption(
       source,
       issuer,
@@ -416,7 +416,7 @@ contract Bridge {
    * @param user the address of the user
    * @param amount of asset to transfer from the user
    **/
-  function unLockAsset(address user, uint256 amount) internal {
+  function unlockAsset(address user, uint256 amount) internal {
     erc20.transfer(user, amount);
   }
 
