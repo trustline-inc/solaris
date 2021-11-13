@@ -147,11 +147,21 @@ export class Transfer {
     )
   }
 
-  /**
-   * @function redeemTokens
-   * Called after initiating a transfer to Flare
-   */
-  redeemTokens = () => {
-    // TODO
+/**
+ * @function createRedemptionReservation
+ * @param {string} redeemerAddress The address of the redeemer
+ * @param {string} issuerAddress The address of the issuer
+ * Creates a window for the initiator to prove a redemption transaction
+ */
+  createRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "createRedemptionReservation",
+      [
+        redeemerAddress,
+        issuerAddress,
+        null
+      ]
+    )
   }
 }
