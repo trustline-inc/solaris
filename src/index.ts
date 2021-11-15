@@ -59,9 +59,9 @@ export interface TransferOptions {
 
 export class Transfer {
   private readonly options: TransferOptions
+  public amount: BigNumber
   private flare: Flare
   private direction: Direction
-  private amount: BigNumber
   private tokenAddress: string
   private bridgeAddress: string
   private issuer: string
@@ -159,8 +159,7 @@ export class Transfer {
       "createRedemptionReservation",
       [
         redeemerAddress,
-        issuerAddress,
-        null
+        issuerAddress
       ]
     )
   }

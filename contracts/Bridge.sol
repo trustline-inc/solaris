@@ -86,7 +86,6 @@ contract Bridge {
   struct Redemption {
     string source;
     string issuer;
-    uint64 destinationTag;
     uint64 amount;
     address tokenReleaseAddress;
     address redeemer;
@@ -224,13 +223,13 @@ contract Bridge {
     uint64 amount
   ) external issuerMustBePending(issuer) {
 
-    // verifyPaymentFinality(
-    //   txHash,
-    //   source,
-    //   issuer,
-    //   destinationTag,
-    //   amount
-    // );
+    verifyPaymentFinality(
+      txHash,
+      source,
+      issuer,
+      destinationTag,
+      amount
+    );
 
     issuers[issuer].xrplTxId = txHash;
     issuers[issuer].status = Status.COMPLETED;
@@ -281,18 +280,12 @@ contract Bridge {
    * @dev The redemption reservation window is 2 hours long
    * @param source the source address in the tx
    * @param issuer the issuer address of the tx
-   * @param destinationTag the destination tag of the tx
    **/
   function createRedemptionReservation(
     string calldata source,
-    string calldata issuer,
-    uint64 destinationTag
+    string calldata issuer
   ) external {
-    bytes32 redemptionHash = createRedemptionReservationHash(
-      source,
-      issuer,
-      destinationTag
-    );
+    bytes32 redemptionHash = createRedemptionReservationHash(source, issuer);
 
     // Can't make another reservation while the reservation is already activated.
     require(
@@ -306,10 +299,9 @@ contract Bridge {
 
   function createRedemptionReservationHash(
     string calldata source,
-    string calldata issuer,
-    uint64 destinationTag
+    string calldata issuer
   ) public pure returns (bytes32 redepmtionHash) {
-    return keccak256(abi.encode(source, issuer, destinationTag));
+    return keccak256(abi.encode(source, issuer));
   }
 
   /**
@@ -318,14 +310,12 @@ contract Bridge {
    * @param txID the payment tx ID from the XRPL
    * @param source the source address in the tx
    * @param issuer the issuer address of the tx
-   * @param destinationTag the issuer Tag of tx
    * @param amount sent in tx
    **/
   function completeRedemption(
     bytes32 txID,
     string calldata source,
     string calldata issuer,
-    uint64 destinationTag,
     uint64 amount,
     address destAddress
   ) external {
@@ -340,8 +330,7 @@ contract Bridge {
     );
     bytes32 redemptionHash = createRedemptionReservationHash(
       source,
-      issuer,
-      destinationTag
+      issuer
     );
     require(
       reservations[redemptionHash].redeemer == msg.sender,
@@ -352,7 +341,7 @@ contract Bridge {
       txID,
       source,
       issuer,
-      destinationTag,
+      0,
       amount
     );
     issuers[issuer].amount = issuers[issuer].amount - amount;
@@ -360,7 +349,6 @@ contract Bridge {
     redemptions[txID] = Redemption(
       source,
       issuer,
-      destinationTag,
       amount,
       destAddress,
       msg.sender
@@ -422,14 +410,15 @@ contract Bridge {
 
 
   /**
-   * @dev Proves that the XRPL issuance is completed.
+   * @notice Proves that the XRPL issuance/redemption is completed.
    * @param txID the issuance transaction ID from the XRPL
+   * @param receiverOrRedeemer the receiverOrRedeemer address
    * @param issuer the address of the issuing account
    * @param amount the issuance amount
    **/
   function verifyPaymentFinality(
     bytes32 txID,
-    string calldata source,
+    string calldata receiverOrRedeemer,
     string calldata issuer,
     uint64 destinationTag,
     uint256 amount

@@ -39,7 +39,7 @@ describe("Solaris", function () {
     await stateConnector.setFinality(true);
   });
 
-  describe("unit test", async function () {
+  describe("Flare to XRP Ledger Transfers", async function () {
     this.timeout(30000);
 
     it("throws for unsupported asset", async () => {
@@ -57,6 +57,23 @@ describe("Solaris", function () {
         }, "ERC721")
       };
       expect(createTransfer).to.throw(Error, "Asset type not supported")
+    })
+
+    it("stores the amount as a BigNumber", async () => {
+      const amount = BigNumber.from(100).mul(WAD)
+      const transfer = new solaris.Transfer({
+        direction: {
+          source: "LOCAL",
+          destination: "XRPL_TESTNET"
+        },
+        amount,
+        tokenAddress: erc20Token.address,
+        bridgeAddress: bridge.address,
+        signer: owner,
+        provider: hre.ethers.provider
+      })
+      expect(transfer.amount).to.equal(amount)
+      expect(transfer.amount.toString()).to.equal("100000000000000000000")
     })
 
     it("completes issuance", async () => {
@@ -91,7 +108,7 @@ describe("Solaris", function () {
       })
 
       data = await transfer.createIssuer(issuer.address)
-      transactionResponse = await bridge.createIssuer(issuer.address, amount.div(WAD));
+      transactionResponse = await bridge.createIssuer(issuer.address, amount);
       expect(data).to.equal(transactionResponse.data)
 
       let status = await bridge.getIssuerStatus(issuer.address);
@@ -125,15 +142,10 @@ describe("Solaris", function () {
       const prepared = await api.prepareTrustline(receiver.address, tx)
       const signed = api.sign(prepared.txJSON, receiver.secret).signedTransaction
       const res = await api.submit(signed)
-      console.log("Trust line transaction submitted.")
-      console.log(res.resultCode, res.resultMessage)
 
-      setTimeout(() => { console.log("done") }, 3000)
+      setTimeout(() => { return }, 3000)
 
       // Issue tokens to receiver
-
-      console.log("value in drops", api.xrpToDrops(amount.div(WAD).toString()))
-
       let latestLedgerVersion = await api.getLedgerVersion()
       const preparedTx = await api.prepareTransaction({
         TransactionType: "Payment",
@@ -148,18 +160,15 @@ describe("Solaris", function () {
       })
       const response = api.sign(preparedTx.txJSON, issuer.secret)
       const txID = response.id
-      console.log("Issuance txID:", txID)
       const txBlob = response.signedTransaction
       latestLedgerVersion = await api.getLedgerVersion()
-      const result = await api.submit(txBlob)
-      console.log("Tentative result code:", result.resultCode)
-      console.log("Tentative result message:", result.resultMessage)
+      await api.submit(txBlob)
 
-      setTimeout(() => { console.log("done") }, 3000)
+      setTimeout(() => { return }, 3000)
 
       data = await transfer.verifyIssuance(txID, issuer.address)
-      console.log("data", data)
-      console.log("amount", amount.div(WAD).toString())
+
+      // TODO: Review conversion of `amount` from ether to wei
       transactionResponse = await bridge.completeIssuance(
         utils.id(txID),
         "source",

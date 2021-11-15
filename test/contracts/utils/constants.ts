@@ -9,7 +9,7 @@ const errorTypes = {
   TX_ID_ALREADY_REDEEMED:
     "This transaction ID has already been used to redeem tokens.",
   TWO_HOURS_NOT_PASSED:
-    "The previous redemption reservation for these parameters was submitted less than 2 hours ago.",
+    "The previous redemption reservation for these params was submitted less than 2 hours ago.",
   NON_ZERO_DESTINATION_ADDRESS:
     "Destination address cannot be the zero address.",
   ONLY_REDEEMER:
