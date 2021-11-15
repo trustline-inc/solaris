@@ -105,11 +105,11 @@ contract Bridge {
   // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
   string public currencyCode;
 
-  // redemption hash keccak256(source, issuer, destinationTag)
+  // bytes32 reservation hash = keccak256(source, issuer)
   mapping(bytes32 => Reservation) public reservations;
-  // redemption hash (source, issuer, destinationTag)
+  // bytes32 redemption hash = keccak256(source, issuer)
   mapping(bytes32 => Redemption) public redemptions;
-  // issuer address to the amount Issuer struct
+  // string = xrpl issuance address
   mapping(string => Issuer) public issuers;
   string[] public issuerList;
   string[] public verifiedIssuerList;

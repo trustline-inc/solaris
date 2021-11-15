@@ -49,8 +49,8 @@ type Direction = {
 }
 
 export interface TransferOptions {
+  amount?: BigNumber;
   direction: Direction;
-  amount: BigNumber;
   signer: Signer;
   tokenAddress: string;
   bridgeAddress: string;
@@ -60,6 +60,7 @@ export interface TransferOptions {
 export class Transfer {
   private readonly options: TransferOptions
   public amount: BigNumber
+  public reservation: any
   private flare: Flare
   private direction: Direction
   private tokenAddress: string
@@ -70,7 +71,7 @@ export class Transfer {
   private txID: string
   private provider: any
 
-  constructor(options?: TransferOptions, tokenType: string = "ERC20") {
+  constructor(options: TransferOptions, tokenType: string = "ERC20") {
     this.options = options
     if (options === undefined) throw new Error("Missing required inputs")
     if (tokenClassMapping[tokenType] === undefined) {
@@ -90,7 +91,8 @@ export class Transfer {
    * @function approve
    * Requests user approval to transfer the ERC20 token
    */
-  approve = async () => {
+  approve = async (amount?: BigNumber) => {
+    if (amount) this.amount = amount
     const erc20Token = new Contract(this.tokenAddress, ERC20ABI.abi, this.provider)
     this.currency = await erc20Token.symbol()
     return erc20Token.interface.encodeFunctionData("approve", [this.bridgeAddress, this.amount])
@@ -98,10 +100,10 @@ export class Transfer {
 
   /**
    * @function createIssuer
-   * @param issuer The address of the issuing account
+   * @param {string} issuer The address of the issuing account
    * Initiates a transfer between networks
    */
-  createIssuer = async (issuer?: string) => {
+  createIssuer = async (issuer: string) => {
     this.issuer = issuer
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
     return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
@@ -154,9 +156,43 @@ export class Transfer {
  * Creates a window for the initiator to prove a redemption transaction
  */
   createRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    this.reservation = {
+      redeemer: redeemerAddress,
+      issuer: issuerAddress
+    }
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
     return bridge.interface.encodeFunctionData(
       "createRedemptionReservation",
+      [
+        redeemerAddress,
+        issuerAddress
+      ]
+    )
+  }
+
+  /**
+   * @function getRedemptionReservation
+   * @param {string} redeemerAddress The address of the redeemer
+   * @param {string} issuerAddress The address of the issuer
+   * Gets the redemption reservation details
+   */
+  getRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    const reservation = await bridge.reservations(redeemerAddress, issuerAddress)
+    return reservation
+  }
+
+  /**
+ * @function cancelRedemptionReservation
+ * @param {string} redeemerAddress The address of the redeemer
+ * @param {string} issuerAddress The address of the issuer
+ * Creates a window for the initiator to prove a redemption transaction
+ */
+  cancelRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    delete this.reservation
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "cancelRedemptionReservation",
       [
         redeemerAddress,
         issuerAddress
