@@ -183,11 +183,11 @@ export class Transfer {
   }
 
   /**
- * @function cancelRedemptionReservation
- * @param {string} redeemerAddress The address of the redeemer
- * @param {string} issuerAddress The address of the issuer
- * Creates a window for the initiator to prove a redemption transaction
- */
+   * @function cancelRedemptionReservation
+   * @param {string} redeemerAddress The address of the redeemer
+   * @param {string} issuerAddress The address of the issuer
+   * Creates a window for the initiator to prove a redemption transaction
+   */
   cancelRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
     delete this.reservation
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
@@ -198,5 +198,14 @@ export class Transfer {
         issuerAddress
       ]
     )
+  }
+
+  /**
+   * @function getVerifiedIssuers
+   */
+   getVerifiedIssuers = async () => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    const verifiedIssuers = bridge.getVerifiedIssuers()
+    return verifiedIssuers
   }
 }

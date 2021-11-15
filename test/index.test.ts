@@ -203,6 +203,11 @@ describe("Solaris", function () {
         await api.disconnect()
       });
 
+      it("gets verified issuers", async () => {
+        const verifiedIssuers = await bridge.getVerifiedIssuers()
+        expect(verifiedIssuers).to.eql([issuer.address])
+      })
+
     })
 
     describe("Redemption", () => {

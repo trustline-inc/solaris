@@ -137,7 +137,7 @@ contract Bridge {
    * @notice Returns a issuer list
    * @return issuer list
    */
-  function getIssuerList()
+  function getIssuers()
     external
     view
     returns(string[] memory)
@@ -149,7 +149,7 @@ contract Bridge {
    * @notice Returns a verified issuer list
    * @return verified issuer list
    */
-  function getVerifiedIssuerList()
+  function getVerifiedIssuers()
     external
     view
     returns(string[] memory)

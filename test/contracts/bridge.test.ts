@@ -200,11 +200,11 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is added to issuerList", async () => {
-      const issuerListBefore = await bridge.getIssuerList();
+      const issuerListBefore = await bridge.getIssuers();
       expect(issuerListBefore.length).to.equal(0)
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
 
-      const issuerListAfter = await bridge.getIssuerList();
+      const issuerListAfter = await bridge.getIssuers();
       expect(issuerListAfter.length).to.equal(1)
       expect(issuerListAfter[0]).to.equal(issuer)
     });
@@ -355,7 +355,7 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is added to verifiedIssuerList", async () => {
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(0)
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
       await bridge.completeIssuance(
@@ -366,7 +366,7 @@ describe("Bridge", function () {
           AMOUNT_TO_ISSUE
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(1)
       expect(verifiedIssuersAfter[0]).to.equal(issuer)
     });
@@ -501,7 +501,7 @@ describe("Bridge", function () {
       );
 
 
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(1)
       expect(verifiedIssuersBefore[0]).to.equal(issuer)
 
@@ -513,7 +513,7 @@ describe("Bridge", function () {
           AMOUNT_TO_ISSUE
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(0)
     });
   });
@@ -724,7 +724,7 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is removed from verifiedIssuerList", async () => {
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(1)
       expect(verifiedIssuersBefore[0]).to.equal(issuer)
 
@@ -737,7 +737,7 @@ describe("Bridge", function () {
           redeemer.address
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(0)
     });
 
