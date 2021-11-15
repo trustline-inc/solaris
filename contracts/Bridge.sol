@@ -28,6 +28,8 @@ contract Bridge {
   event IssuancePending(string issuer, uint256 amount);
   event IssuanceCompleted(string issuer, uint256 amount);
   event IssuanceCanceled(string issuer);
+  event ReservationCreated(string source, string issuer);
+  event ReservationCanceled(string source, string issuer);
   event RedemptionCompleted(bytes32 xrplTxId, uint256 amount);
 
   /////////////////////////////////////////
@@ -295,6 +297,7 @@ contract Bridge {
 
     reservations[redemptionHash].redeemer = msg.sender;
     reservations[redemptionHash].createdAt = block.timestamp;
+    emit ReservationCreated(source, issuer);
   }
 
   function createRedemptionReservationHash(
@@ -302,6 +305,24 @@ contract Bridge {
     string calldata issuer
   ) public pure returns (bytes32 redepmtionHash) {
     return keccak256(abi.encode(source, issuer));
+  }
+
+  /**
+   * @notice Cancels a reservation.
+   * @param source the source address in the tx
+   * @param issuer the issuer address of the tx
+   **/
+  function cancelRedemptionReservation(
+    string calldata source,
+    string calldata issuer
+  ) external {
+    bytes32 redemptionHash = createRedemptionReservationHash(source, issuer);
+    require(
+      reservations[redemptionHash].redeemer == msg.sender,
+      "There is no reservation for this issuer."
+    );
+    delete reservations[redemptionHash];
+    emit ReservationCanceled(source, issuer);
   }
 
   /**

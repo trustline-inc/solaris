@@ -558,6 +558,23 @@ describe("Bridge", function () {
       // we'll accept it, as long as it's no longer zero because we have time skips, it's impossible to pinpoint the variable
       expect(issuerResult[1].toNumber()).to.be.greaterThan(0);
     });
+
+    it("checks for the reservation when canceling", async () => {
+      await assertRevert(bridge.cancelRedemptionReservation(source, issuer), errorTypes.NO_RESERVATION);
+    });
+
+    it("cancels reservations", async () => {
+      const redemptionHash = await bridge.createRedemptionReservationHash(
+        source,
+        issuer
+      );
+      await bridge.createRedemptionReservation(source, issuer);
+      await bridge.cancelRedemptionReservation(source, issuer);
+      let issuerResult = await bridge.reservations(redemptionHash);
+      expect(issuerResult[0]).to.equal(ADDRESS_ZERO);
+      expect(issuerResult[1].toNumber()).to.equal(0);
+    });
+
   });
 
   describe("completeRedemption", async function () {

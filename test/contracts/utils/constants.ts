@@ -15,6 +15,7 @@ const errorTypes = {
   ONLY_REDEEMER:
     "Only the reservation holder can submit a redemption transaction.",
   PAYMENT_NOT_PROVEN: "The state connector did not prove this transaction.",
+  NO_RESERVATION: "There is no reservation for this issuer."
 };
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 const BYTES32_ZERO =
