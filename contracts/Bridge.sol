@@ -5,19 +5,19 @@ pragma solidity ^0.8.0;
 import "./interfaces/IERC20.sol";
 
 interface StateConnectorLike {
-  function getPaymentFinality(
-    uint32 chainId,
-    bytes32 txHash,
-    bytes32 destinationHash,
-    uint256 amount,
-    bytes32 currencyHash
-  )
-  external
-  returns (
-    uint64 ledger,
-    uint64 indexSearchRegion,
-    bool finality
-  );
+    function getPaymentFinality(
+        uint32 chainId,
+        bytes32 txHash,
+        bytes32 destinationHash,
+        uint256 amount,
+        bytes32 currencyHash
+    )
+    external
+    returns (
+        uint64 ledger,
+        uint64 indexSearchRegion,
+        bool finality
+    );
 }
 
 contract Bridge {
@@ -25,10 +25,12 @@ contract Bridge {
   // Events
   /////////////////////////////////////////
 
-  event IssuancePending(string indexed issuer, uint256 amount);
-  event IssuanceCompleted(string indexed issuer, uint256 amount);
-  event IssuanceCanceled(string indexed issuer);
-  event RedemptionCompleted(bytes32 indexed XrplTxId, uint256 amount);
+  event IssuancePending(string issuer, uint256 amount);
+  event IssuanceCompleted(string issuer, uint256 amount);
+  event IssuanceCanceled(string issuer);
+  event ReservationCreated(string source, string issuer);
+  event ReservationCanceled(string source, string issuer);
+  event RedemptionCompleted(bytes32 xrplTxId, uint256 amount);
 
   /////////////////////////////////////////
   // Modifiers
@@ -86,7 +88,6 @@ contract Bridge {
   struct Redemption {
     string source;
     string issuer;
-    uint64 destinationTag;
     uint64 amount;
     address tokenReleaseAddress;
     address redeemer;
@@ -95,19 +96,20 @@ contract Bridge {
   struct Issuer {
     uint256 amount;
     address sender;
-    bytes32 XrplTxId;
+    bytes32 xrplTxId;
     Status status;
   }
 
   IERC20 public erc20;
   StateConnectorLike public stateConnector;
-  string public currencyCode; // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
+  // XRPL currency code to issue, https://xrpl.org/currency-formats.html#currency-codes
+  string public currencyCode;
 
-  // redemption hash keccak256(source, issuer, destinationTag)
+  // bytes32 reservation hash = keccak256(source, issuer)
   mapping(bytes32 => Reservation) public reservations;
-  // redemption hash (source, issuer, destinationTag)
+  // bytes32 redemption hash = keccak256(source, issuer)
   mapping(bytes32 => Redemption) public redemptions;
-  // issuer address to the amount Issuer struct
+  // string = xrpl issuance address
   mapping(string => Issuer) public issuers;
   string[] public issuerList;
   string[] public verifiedIssuerList;
@@ -116,9 +118,13 @@ contract Bridge {
   // Constructor
   /////////////////////////////////////////
 
-  constructor(string memory currCode, address erc20AssetAddress, address stateConnectorAddress) {
-    require(bytes(currCode).length != 0, "Currency code can not be empty");
-    currencyCode = currCode;
+  constructor(
+    string memory _currencyCode,
+    address erc20AssetAddress,
+    address stateConnectorAddress
+  ) {
+    require(bytes(_currencyCode).length != 0, "Currency code can not be empty");
+    currencyCode = _currencyCode;
     erc20 = IERC20(erc20AssetAddress);
     stateConnector = StateConnectorLike(stateConnectorAddress);
   }
@@ -131,7 +137,7 @@ contract Bridge {
    * @notice Returns a issuer list
    * @return issuer list
    */
-  function getIssuerList()
+  function getIssuers()
     external
     view
     returns(string[] memory)
@@ -143,7 +149,7 @@ contract Bridge {
    * @notice Returns a verified issuer list
    * @return verified issuer list
    */
-  function getVerifiedIssuerList()
+  function getVerifiedIssuers()
     external
     view
     returns(string[] memory)
@@ -197,7 +203,7 @@ contract Bridge {
       issuers[issuer].sender == msg.sender,
       "Only the originating account can cancel this issuer."
     );
-    unLockAsset(msg.sender, issuers[issuer].amount);
+    unlockAsset(msg.sender, issuers[issuer].amount);
     issuers[issuer].status = Status.CANCELED;
     emit IssuanceCanceled(issuer);
   }
@@ -206,7 +212,7 @@ contract Bridge {
    * @notice Prove that the XRPL issuance completed so that the issuer can be validated.
    * @dev Marks the status of the issuer as COMPLETED
    * @param txHash the XRPL payment tx ID
-   * @param source the address of the source - @shine2lay to clarify
+   * @param source the address of the source
    * @param issuer the address of the issuer
    * @param destinationTag the destination tag
    * @param amount the amount issued
@@ -227,7 +233,7 @@ contract Bridge {
       amount
     );
 
-    issuers[issuer].XrplTxId = txHash;
+    issuers[issuer].xrplTxId = txHash;
     issuers[issuer].status = Status.COMPLETED;
     verifiedIssuerList.push(issuer);
     emit IssuanceCompleted(issuer, amount);
@@ -252,7 +258,7 @@ contract Bridge {
     uint64 amount
   ) external {
     require(
-      issuers[issuer].XrplTxId != txHash,
+      issuers[issuer].xrplTxId != txHash,
       "The provided transaction has already been proved."
     );
 
@@ -268,7 +274,7 @@ contract Bridge {
     uint256 amountToSend = issuers[issuer].amount;
     issuers[issuer].amount = 0;
     removeVerifiedIssuer(issuer);
-    unLockAsset(msg.sender, amountToSend);
+    unlockAsset(msg.sender, amountToSend);
   }
 
   /**
@@ -276,50 +282,61 @@ contract Bridge {
    * @dev The redemption reservation window is 2 hours long
    * @param source the source address in the tx
    * @param issuer the issuer address of the tx
-   * @param destinationTag the destination tag of the tx
    **/
   function createRedemptionReservation(
     string calldata source,
-    string calldata issuer,
-    uint64 destinationTag
+    string calldata issuer
   ) external {
-    bytes32 redemptionHash = createRedemptionReservationHash(
-      source,
-      issuer,
-      destinationTag
-    );
+    bytes32 redemptionHash = createRedemptionReservationHash(source, issuer);
 
     // Can't make another reservation while the reservation is already activated.
     require(
       block.timestamp >= reservations[redemptionHash].createdAt + 7200,
-      "The previous redemption reservation for these parameters was submitted less than 2 hours ago."
+      "The previous redemption reservation for these params was submitted less than 2 hours ago."
     );
 
     reservations[redemptionHash].redeemer = msg.sender;
     reservations[redemptionHash].createdAt = block.timestamp;
+    emit ReservationCreated(source, issuer);
   }
 
   function createRedemptionReservationHash(
     string calldata source,
-    string calldata issuer,
-    uint64 destinationTag
+    string calldata issuer
   ) public pure returns (bytes32 redepmtionHash) {
-    return keccak256(abi.encode(source, issuer, destinationTag));
+    return keccak256(abi.encode(source, issuer));
   }
 
   /**
-   * @notice Proves that trustless issued currency was redeemed on the XRPL and sends an equivalent amount to msg.sender.
+   * @notice Cancels a reservation.
+   * @param source the source address in the tx
+   * @param issuer the issuer address of the tx
+   **/
+  function cancelRedemptionReservation(
+    string calldata source,
+    string calldata issuer
+  ) external {
+    bytes32 redemptionHash = createRedemptionReservationHash(source, issuer);
+    require(
+      reservations[redemptionHash].redeemer == msg.sender,
+      "There is no reservation for this issuer."
+    );
+    delete reservations[redemptionHash];
+    emit ReservationCanceled(source, issuer);
+  }
+
+  /**
+   * @notice Proves that trustless issued currency was redeemed on the XRPL.
+   * Sends an equivalent amount to msg.sender.
    * @param txID the payment tx ID from the XRPL
    * @param source the source address in the tx
    * @param issuer the issuer address of the tx
-   * @param destinationTag the issuer Tag of tx
    * @param amount sent in tx
    **/
   function completeRedemption(
     bytes32 txID,
     string calldata source,
     string calldata issuer,
-    uint64 destinationTag,
     uint64 amount,
     address destAddress
   ) external {
@@ -334,8 +351,7 @@ contract Bridge {
     );
     bytes32 redemptionHash = createRedemptionReservationHash(
       source,
-      issuer,
-      destinationTag
+      issuer
     );
     require(
       reservations[redemptionHash].redeemer == msg.sender,
@@ -346,15 +362,14 @@ contract Bridge {
       txID,
       source,
       issuer,
-      destinationTag,
+      0,
       amount
     );
     issuers[issuer].amount = issuers[issuer].amount - amount;
-    unLockAsset(destAddress, amount);
+    unlockAsset(destAddress, amount);
     redemptions[txID] = Redemption(
       source,
       issuer,
-      destinationTag,
       amount,
       destAddress,
       msg.sender
@@ -369,8 +384,8 @@ contract Bridge {
   }
 
   /**
-   * TODO: The final step for trustless issued currency is proving that the issuing account is blackholed.
-   * Once this is proven, the issuing address can be verified.
+   * TODO: The final step for trustless issued currency is proving that the issuing account is
+   * blackholed. Once this is proven, the issuing address can be verified.
    *
    * FLARE TEAM MUST IMPLEMENT STATE CONNECTOR FUNCTION TO VERIFY BLACKHOLED ISSUERS.
    **/
@@ -386,7 +401,9 @@ contract Bridge {
    **/
   function removeVerifiedIssuer(string memory issuer) internal {
     for (uint256 i = 0; i < verifiedIssuerList.length; i++) {
-      if (keccak256(abi.encodePacked(verifiedIssuerList[i])) == keccak256(abi.encodePacked(issuer))) {
+      if (
+        keccak256(abi.encodePacked(verifiedIssuerList[i])) == keccak256(abi.encodePacked(issuer))
+      ) {
         verifiedIssuerList[i] = verifiedIssuerList[verifiedIssuerList.length - 1];
         verifiedIssuerList.pop();
         break;
@@ -408,23 +425,24 @@ contract Bridge {
    * @param user the address of the user
    * @param amount of asset to transfer from the user
    **/
-  function unLockAsset(address user, uint256 amount) internal {
+  function unlockAsset(address user, uint256 amount) internal {
     erc20.transfer(user, amount);
   }
 
 
   /**
-   * @dev Proves that the XRPL issuance is completed.
+   * @notice Proves that the XRPL issuance/redemption is completed.
    * @param txID the issuance transaction ID from the XRPL
+   * @param receiverOrRedeemer the receiverOrRedeemer address
    * @param issuer the address of the issuing account
    * @param amount the issuance amount
    **/
   function verifyPaymentFinality(
     bytes32 txID,
-    string calldata source,
+    string calldata receiverOrRedeemer,
     string calldata issuer,
     uint64 destinationTag,
-    uint64 amount
+    uint256 amount
   ) internal {
     bytes32 currencyHash = keccak256(abi.encodePacked(currencyCode, issuer));
 

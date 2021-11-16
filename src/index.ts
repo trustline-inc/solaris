@@ -1,7 +1,17 @@
-import { BigNumber, Contract, utils } from "ethers"
+import { BigNumber, Contract, utils, Signer } from "ethers"
 import BridgeABI from "../artifacts/contracts/Bridge.sol/Bridge.json"
 import ERC20ABI from "../artifacts/contracts/interfaces/IERC20.sol/IERC20.json"
 import XRPL from "./xrpl"
+import ERC20Bridge from "./flare/ERC20"
+import Flare from "./flare"
+
+type tokenClassMapping = {
+  [key: string]: any;
+}
+
+const tokenClassMapping: tokenClassMapping = {
+  ERC20: ERC20Bridge
+}
 
 /**
  * List of supported networks
@@ -38,87 +48,164 @@ type Direction = {
   destination: string;
 }
 
+export interface TransferOptions {
+  amount?: BigNumber;
+  direction: Direction;
+  signer: Signer;
+  tokenAddress: string;
+  bridgeAddress: string;
+  provider: any; // TODO: add explicit type
+}
+
 export class Transfer {
+  private readonly options: TransferOptions
+  public amount: BigNumber
+  public reservation: any
+  private flare: Flare
   private direction: Direction
-  private amount: BigNumber
-  private token: string
-  private bridge: string
+  private tokenAddress: string
+  private bridgeAddress: string
   private issuer: string
   private currency: string
-  private signer: any
-  private txID: string|boolean
+  private signer: Signer
+  private txID: string
+  private provider: any
 
-  constructor(options?: any) {
+  constructor(options: TransferOptions, tokenType: string = "ERC20") {
+    this.options = options
     if (options === undefined) throw new Error("Missing required inputs")
+    if (tokenClassMapping[tokenType] === undefined) {
+      throw new Error("Asset type not supported")
+    }
+    const Token = tokenClassMapping[tokenType]
+    this.flare = new Token(options.bridgeAddress, options.tokenAddress, options.signer)
     this.direction = options.direction
-    this.token = options.token
-    this.bridge = options.bridge
     this.amount = options.amount
     this.signer = options.signer
+    this.tokenAddress = options.tokenAddress
+    this.bridgeAddress = options.bridgeAddress
+    this.provider = options.provider
   }
 
   /**
    * @function approve
    * Requests user approval to transfer the ERC20 token
    */
-  approve = async () => {
-    const erc20Token = new Contract(this.token, ERC20ABI.abi, this.signer)
+  approve = async (amount?: BigNumber) => {
+    if (amount) this.amount = amount
+    const erc20Token = new Contract(this.tokenAddress, ERC20ABI.abi, this.provider)
     this.currency = await erc20Token.symbol()
-    return await erc20Token.approve(this.bridge, this.amount)
+    return erc20Token.interface.encodeFunctionData("approve", [this.bridgeAddress, this.amount])
   }
 
   /**
-   * @function initiate
-   * @param issuer The address of the issuing account
+   * @function createIssuer
+   * @param {string} issuer The address of the issuing account
    * Initiates a transfer between networks
    */
-  initiate = async (issuer?: string) => {
-    if (["LOCAL", "SONGBIRD", "FLARE"].includes(this.direction.source)) {
-      this.issuer = issuer
-      const bridge = new Contract(this.bridge, BridgeABI.abi, this.signer)
-      const result = await bridge.createIssuer(this.issuer, this.amount, { gasLimit: 300000 })
-      return result
-    } else {
-      // TODO: Originating from XRPL, call `redeemptionAttempt`
-    }
+  createIssuer = async (issuer: string) => {
+    this.issuer = issuer
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
+    return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
   }
 
   /**
-   * @function issueTokens
+   * @function checkIssuerSettings
+   * @param network
+   * @param issuingAccount
+   */
+  checkIssuerSettings = async (network: string, issuingAccount: any) => {
+    const xrpl = new XRPL(networks[network].url)
+    // TODO
+  }
+
+  /**
+   * @function checkReceiverTrustLine
    * @param network
    * @param issuingAccount
    * @param receivingAddress
    */
-  issueTokens = async (network: string, issuingAccount: any, receivingAccount: any) => {
+  checkReceiverTrustLine = async (network: string, issuingAccount: any, receivingAccount: any) => {
     const xrpl = new XRPL(networks[network].url)
-    await xrpl.enableRippling(issuingAccount)
-    await xrpl.createTrustline(receivingAccount, issuingAccount, this.currency)
-    // TODO: Make sure that the amount is 6 decimal places max
-    this.txID = await xrpl.issueToken(issuingAccount, receivingAccount, this.amount.div("1000000000000000000").toString(), this.currency);
-    await xrpl.setRegularKey(issuingAccount);
+    // TODO
   }
 
   /**
    * @function verifyIssuance
-   * Called after initiating a transfer from Flare
+   * Called after initiating a transfer from Flare. The amount is converted from a BN to an integer.
    */
-  verifyIssuance = async () => {
-    const bridge = new Contract(this.bridge, BridgeABI.abi, this.signer)
-    return await bridge.completeIssuance(
-      utils.id(String(this.txID)),
-      "source",
-      this.issuer,
-      0,
-      this.amount.div("1000000000000000000"),
-      { gasLimit: 300000 }
+  verifyIssuance = async (txID: string, issuerAddress: string) => {
+    this.txID = txID
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "completeIssuance",
+      [
+        utils.id(txID),
+        "source",
+        issuerAddress,
+        0,
+        Number(this.amount.div("1000000000000000000")) // TODO: Confirm the expected precision.
+      ]
+    )
+  }
+
+/**
+ * @function createRedemptionReservation
+ * @param {string} redeemerAddress The address of the redeemer
+ * @param {string} issuerAddress The address of the issuer
+ * Creates a window for the initiator to prove a redemption transaction
+ */
+  createRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    this.reservation = {
+      redeemer: redeemerAddress,
+      issuer: issuerAddress
+    }
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "createRedemptionReservation",
+      [
+        redeemerAddress,
+        issuerAddress
+      ]
     )
   }
 
   /**
-   * @function redeemTokens
-   * Called after initiating a transfer to Flare
+   * @function getRedemptionReservation
+   * @param {string} redeemerAddress The address of the redeemer
+   * @param {string} issuerAddress The address of the issuer
+   * Gets the redemption reservation details
    */
-  redeemTokens = () => {
-    // TODO
+  getRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    const reservation = await bridge.reservations(redeemerAddress, issuerAddress)
+    return reservation
+  }
+
+  /**
+   * @function cancelRedemptionReservation
+   * @param {string} redeemerAddress The address of the redeemer
+   * @param {string} issuerAddress The address of the issuer
+   * Creates a window for the initiator to prove a redemption transaction
+   */
+  cancelRedemptionReservation = async (redeemerAddress: string, issuerAddress: string) => {
+    delete this.reservation
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "cancelRedemptionReservation",
+      [
+        redeemerAddress,
+        issuerAddress
+      ]
+    )
+  }
+
+  /**
+   * @function getVerifiedIssuers
+   */
+   getVerifiedIssuers = async () => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    const verifiedIssuers = bridge.getVerifiedIssuers()
+    return verifiedIssuers
   }
 }

@@ -116,12 +116,11 @@ describe("Bridge", function () {
       let status = await bridge.getIssuerStatus(issuer);
       expect(status).to.equal(statuses.COMPLETED);
 
-      await bridge.createRedemptionReservation(source, issuer, 0);
+      await bridge.createRedemptionReservation(source, issuer);
       await bridge.completeRedemption(
         ethers.utils.id("second tx hash"),
         source,
         issuer,
-        0,
         AMOUNT_TO_ISSUE,
         redeemer.address
       );
@@ -201,11 +200,11 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is added to issuerList", async () => {
-      const issuerListBefore = await bridge.getIssuerList();
+      const issuerListBefore = await bridge.getIssuers();
       expect(issuerListBefore.length).to.equal(0)
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
 
-      const issuerListAfter = await bridge.getIssuerList();
+      const issuerListAfter = await bridge.getIssuers();
       expect(issuerListAfter.length).to.equal(1)
       expect(issuerListAfter[0]).to.equal(issuer)
     });
@@ -289,7 +288,7 @@ describe("Bridge", function () {
       );
     });
 
-    it("fails payment hasn't been proven on stateConnector", async () => {
+    it("fails payment that hasn't been proven on stateConnector", async () => {
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
       await stateConnector.setFinality(false);
       await assertRevert(
@@ -356,7 +355,7 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is added to verifiedIssuerList", async () => {
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(0)
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
       await bridge.completeIssuance(
@@ -367,7 +366,7 @@ describe("Bridge", function () {
           AMOUNT_TO_ISSUE
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(1)
       expect(verifiedIssuersAfter[0]).to.equal(issuer)
     });
@@ -404,7 +403,7 @@ describe("Bridge", function () {
       );
     });
 
-    it("fails payment hasn't been proven on stateConnector", async () => {
+    it("fails payment that hasn't been proven on stateConnector", async () => {
       const secondtxHash = ethers.utils.id("second tx hash");
       await bridge.createIssuer(issuer, AMOUNT_TO_ISSUE);
       await bridge.completeIssuance(
@@ -502,7 +501,7 @@ describe("Bridge", function () {
       );
 
 
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(1)
       expect(verifiedIssuersBefore[0]).to.equal(issuer)
 
@@ -514,7 +513,7 @@ describe("Bridge", function () {
           AMOUNT_TO_ISSUE
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(0)
     });
   });
@@ -532,34 +531,50 @@ describe("Bridge", function () {
     });
 
     it("fails if the redemptionReservation has already be placing within the last hour", async () => {
-      await bridge.createRedemptionReservation(source, issuer, 0);
+      await bridge.createRedemptionReservation(source, issuer);
       await assertRevert(
-        bridge.createRedemptionReservation(source, issuer, 0),
+        bridge.createRedemptionReservation(source, issuer),
         errorTypes.TWO_HOURS_NOT_PASSED
       );
       await ethers.provider.send("evm_increaseTime", [7201]);
       await ethers.provider.send("evm_mine", []);
 
-      await bridge.createRedemptionReservation(source, issuer, 0);
+      await bridge.createRedemptionReservation(source, issuer);
     });
 
     it("make sure proper variables are updated", async () => {
       const redemptionHash = await bridge.createRedemptionReservationHash(
         source,
-        issuer,
-        0
+        issuer
       );
       let issuerResult = await bridge.reservations(redemptionHash);
       expect(issuerResult[0]).to.equal(ADDRESS_ZERO);
       expect(issuerResult[1].toNumber()).to.equal(0);
 
-      await bridge.createRedemptionReservation(source, issuer, 0);
+      await bridge.createRedemptionReservation(source, issuer);
 
       issuerResult = await bridge.reservations(redemptionHash);
       expect(issuerResult[0]).to.equal(owner.address);
       // we'll accept it, as long as it's no longer zero because we have time skips, it's impossible to pinpoint the variable
       expect(issuerResult[1].toNumber()).to.be.greaterThan(0);
     });
+
+    it("checks for the reservation when canceling", async () => {
+      await assertRevert(bridge.cancelRedemptionReservation(source, issuer), errorTypes.NO_RESERVATION);
+    });
+
+    it("cancels reservations", async () => {
+      const redemptionHash = await bridge.createRedemptionReservationHash(
+        source,
+        issuer
+      );
+      await bridge.createRedemptionReservation(source, issuer);
+      await bridge.cancelRedemptionReservation(source, issuer);
+      let issuerResult = await bridge.reservations(redemptionHash);
+      expect(issuerResult[0]).to.equal(ADDRESS_ZERO);
+      expect(issuerResult[1].toNumber()).to.equal(0);
+    });
+
   });
 
   describe("completeRedemption", async function () {
@@ -573,7 +588,7 @@ describe("Bridge", function () {
         AMOUNT_TO_ISSUE
       );
 
-      await bridge.createRedemptionReservation(source, issuer, 0);
+      await bridge.createRedemptionReservation(source, issuer);
     });
 
     it("fail if destination address is zero address", async () => {
@@ -582,7 +597,6 @@ describe("Bridge", function () {
           txHash,
           source,
           issuer,
-          0,
           AMOUNT_TO_ISSUE,
           ADDRESS_ZERO
         ),
@@ -593,7 +607,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_ISSUE,
         redeemer.address
       );
@@ -604,7 +617,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_ISSUE,
         redeemer.address
       );
@@ -614,7 +626,6 @@ describe("Bridge", function () {
           txHash,
           source,
           issuer,
-          0,
           AMOUNT_TO_ISSUE,
           redeemer.address
         ),
@@ -629,7 +640,6 @@ describe("Bridge", function () {
           txHash,
           source,
           issuer,
-          0,
           AMOUNT_TO_ISSUE,
           redeemer.address
         ),
@@ -640,20 +650,18 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_ISSUE,
         redeemer.address
       );
     });
 
-    it("fails payment hasn't been proven on stateConnector", async () => {
+    it("fails payment that hasn't been proven on stateConnector", async () => {
       await stateConnector.setFinality(false);
       await assertRevert(
         bridge.completeRedemption(
           txHash,
           source,
           issuer,
-          0,
           AMOUNT_TO_ISSUE,
           redeemer.address
         ),
@@ -665,7 +673,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_ISSUE,
         redeemer.address
       );
@@ -678,7 +685,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_WITHDRAW,
         redeemer.address
       );
@@ -693,7 +699,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_WITHDRAW,
         redeemer.address
       );
@@ -711,7 +716,6 @@ describe("Bridge", function () {
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_WITHDRAW,
         redeemer.address
       );
@@ -720,7 +724,7 @@ describe("Bridge", function () {
     });
 
     it("checks that issuer is removed from verifiedIssuerList", async () => {
-      const verifiedIssuersBefore = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersBefore = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersBefore.length).to.equal(1)
       expect(verifiedIssuersBefore[0]).to.equal(issuer)
 
@@ -729,12 +733,11 @@ describe("Bridge", function () {
           txHash,
           source,
           issuer,
-          0,
           AMOUNT_TO_WITHDRAW,
           redeemer.address
       );
 
-      const verifiedIssuersAfter = await bridge.getVerifiedIssuerList();
+      const verifiedIssuersAfter = await bridge.getVerifiedIssuers();
       expect(verifiedIssuersAfter.length).to.equal(0)
     });
 
@@ -744,15 +747,13 @@ describe("Bridge", function () {
       expect(redemptionResult[0]).to.equal("");
       expect(redemptionResult[1]).to.equal("");
       expect(redemptionResult[2].toNumber()).to.equal(0);
-      expect(redemptionResult[3].toNumber()).to.equal(0);
+      expect(redemptionResult[3]).to.equal(ADDRESS_ZERO);
       expect(redemptionResult[4]).to.equal(ADDRESS_ZERO);
-      expect(redemptionResult[5]).to.equal(ADDRESS_ZERO);
 
       await bridge.completeRedemption(
         txHash,
         source,
         issuer,
-        0,
         AMOUNT_TO_WITHDRAW,
         redeemer.address
       );
@@ -760,10 +761,9 @@ describe("Bridge", function () {
       redemptionResult = await bridge.redemptions(txHash);
       expect(redemptionResult[0]).to.equal(source);
       expect(redemptionResult[1]).to.equal(issuer);
-      expect(redemptionResult[2].toNumber()).to.equal(destinationTag);
-      expect(redemptionResult[3].toNumber()).to.equal(AMOUNT_TO_WITHDRAW);
-      expect(redemptionResult[4]).to.equal(redeemer.address);
-      expect(redemptionResult[5]).to.equal(owner.address);
+      expect(redemptionResult[2].toNumber()).to.equal(AMOUNT_TO_WITHDRAW);
+      expect(redemptionResult[3]).to.equal(redeemer.address);
+      expect(redemptionResult[4]).to.equal(owner.address);
     });
   });
 });

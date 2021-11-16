@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-contract StateConnector{
+contract StateConnector {
   bool finalityToReturn;
 
   function setFinality(bool newFinality) public {
@@ -11,7 +11,7 @@ contract StateConnector{
     uint32 chainId,
     bytes32 txId,
     bytes32 destinationHash,
-    uint64 amount,
+    uint256 amount,
     bytes32 currencyHash
   )
     external view

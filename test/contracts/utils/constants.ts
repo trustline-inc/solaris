@@ -9,12 +9,13 @@ const errorTypes = {
   TX_ID_ALREADY_REDEEMED:
     "This transaction ID has already been used to redeem tokens.",
   TWO_HOURS_NOT_PASSED:
-    "The previous redemption reservation for these parameters was submitted less than 2 hours ago.",
+    "The previous redemption reservation for these params was submitted less than 2 hours ago.",
   NON_ZERO_DESTINATION_ADDRESS:
     "Destination address cannot be the zero address.",
   ONLY_REDEEMER:
     "Only the reservation holder can submit a redemption transaction.",
   PAYMENT_NOT_PROVEN: "The state connector did not prove this transaction.",
+  NO_RESERVATION: "There is no reservation for this issuer."
 };
 const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 const BYTES32_ZERO =
