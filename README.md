@@ -129,7 +129,7 @@ Install the node modules with `yarn` or `npm install`. Run a local [Flare](https
 To deploy a local bridge, pass the ERC20 token address like this:
 
 ```
-TOKEN_ADDRESS=<address> yarn run deploy:local
+FLARE_DIR=~/Desktop/flare TOKEN_ADDRESS=0x0CFD877CEa82E0DCF1F5f852E4B897A80a9B1EF6 yarn run deploy:local
 ```
 
 ## Publishing
