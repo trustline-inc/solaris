@@ -6,7 +6,7 @@ import { HardhatUserConfig } from "hardhat/config";
 
 // Add Flare local accounts from Flare config
 const flareLocalAccounts = [];
-const flareConfPath = `${process.env.FLARE_DIR}/client/config.json`;
+const flareConfPath = `${process.env.FLARE_DIR}/src/stateco/client/config.json`;
 if (existsSync(flareConfPath)) {
   const flareConf = require(flareConfPath);
   flareLocalAccounts.push(flareConf.accounts[0].privateKey);
