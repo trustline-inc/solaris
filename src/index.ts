@@ -105,6 +105,7 @@ export class Transfer {
    */
   createIssuer = async (issuer: string) => {
     this.issuer = issuer
+    console.log(this.issuer, this.amount)
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
     return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
   }

@@ -3,7 +3,7 @@ import { deployBridgeSystem } from "../lib/deployer"
 import axios from "axios"
 import { BigNumber } from "@ethersproject/bignumber"
 import { RippleAPI } from "ripple-lib"
-import * as solaris from "../src/index"
+import * as bridge from "../src/index"
 import { Bridge, StateConnector, Erc20Token } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as chai from "chai";
@@ -13,7 +13,7 @@ const expect = chai.expect;
 const api = new RippleAPI({ server: "wss://s.altnet.rippletest.net" })
 
 // Contracts
-let bridge: Bridge;
+let bridgeContract: Bridge;
 let stateConnector: StateConnector;
 let erc20Token: Erc20Token;
 
@@ -31,7 +31,7 @@ let outboundTransfer: any;
 // Constants
 const WAD = BigNumber.from("1000000000000000000")
 
-describe("Solaris", function () {
+describe("bridge", function () {
   before(async () => {
     // Fund XRPL accounts
     await axios({
@@ -62,7 +62,7 @@ describe("Solaris", function () {
     const { contracts, signers } = await deployBridgeSystem();
 
     // Set contracts
-    bridge = contracts.bridge;
+    bridgeContract = contracts.bridge;
     stateConnector = contracts.stateConnector;
     erc20Token = contracts.erc20;
 
@@ -70,7 +70,7 @@ describe("Solaris", function () {
     owner = signers.owner
 
     await erc20Token.mint(signers.owner.address, BigNumber.from(10000).mul(WAD));
-    await erc20Token.approve(bridge.address, BigNumber.from(10000).mul(WAD));
+    await erc20Token.approve(bridgeContract.address, BigNumber.from(10000).mul(WAD));
     await stateConnector.setFinality(true);
   });
 
@@ -79,14 +79,14 @@ describe("Solaris", function () {
 
     it("throws for unsupported asset", async () => {
       const createTransfer = function() {
-        new solaris.Transfer({
+        new bridge.Transfer({
           direction: {
             source: "LOCAL",
             destination: "XRPL_TESTNET"
           },
           amount: BigNumber.from(100).mul(WAD),
           tokenAddress: erc20Token.address,
-          bridgeAddress: bridge.address,
+          bridgeAddress: bridgeContract.address,
           signer: owner,
           provider: hre.ethers.provider
         }, "ERC721")
@@ -96,14 +96,14 @@ describe("Solaris", function () {
 
     it("stores the amount as a BigNumber", async () => {
       const amount = BigNumber.from(100).mul(WAD)
-      const transfer = new solaris.Transfer({
+      const transfer = new bridge.Transfer({
         direction: {
           source: "LOCAL",
           destination: "XRPL_TESTNET"
         },
         amount,
         tokenAddress: erc20Token.address,
-        bridgeAddress: bridge.address,
+        bridgeAddress: bridgeContract.address,
         signer: owner,
         provider: hre.ethers.provider
       })
@@ -114,14 +114,14 @@ describe("Solaris", function () {
     describe("Issuance", () => {
       before(async () => {
         const amount = BigNumber.from(100).mul(WAD)
-        outboundTransfer = new solaris.Transfer({
+        outboundTransfer = new bridge.Transfer({
           direction: {
             source: "LOCAL",
             destination: "XRPL_TESTNET"
           },
           amount,
           tokenAddress: erc20Token.address,
-          bridgeAddress: bridge.address,
+          bridgeAddress: bridgeContract.address,
           signer: owner,
           provider: hre.ethers.provider
         })
@@ -129,13 +129,13 @@ describe("Solaris", function () {
 
       it("completes issuance", async () => {
         let data = await outboundTransfer.approve()
-        let transactionResponse = await erc20Token.approve(bridge.address, outboundTransfer.amount);
+        let transactionResponse = await erc20Token.approve(bridgeContract.address, outboundTransfer.amount);
         expect(data).to.equal(transactionResponse.data)
         data = await outboundTransfer.createIssuer(issuer.address)
-        transactionResponse = await bridge.createIssuer(issuer.address, outboundTransfer.amount);
+        transactionResponse = await bridgeContract.createIssuer(issuer.address, outboundTransfer.amount);
         expect(data).to.equal(transactionResponse.data)
   
-        let status = await bridge.getIssuerStatus(issuer.address);
+        let status = await bridgeContract.getIssuerStatus(issuer.address);
         expect(status).to.equal(1); // Statuses.PENDING === 1
   
         // Create trust line from receiver to issuer
@@ -187,7 +187,7 @@ describe("Solaris", function () {
         data = await outboundTransfer.verifyIssuance(txID, issuer.address)
   
         // TODO: Review conversion of `amount` from ether to wei
-        transactionResponse = await bridge.completeIssuance(
+        transactionResponse = await bridgeContract.completeIssuance(
           utils.id(txID),
           "source",
           issuer.address,
@@ -196,7 +196,7 @@ describe("Solaris", function () {
         )
         expect(data).to.equal(transactionResponse.data)
   
-        status = await bridge.getIssuerStatus(issuer.address);
+        status = await bridgeContract.getIssuerStatus(issuer.address);
         expect(status).to.equal(3); // Statuses.COMPLETED === 3
   
         await api.disconnect()
@@ -204,7 +204,7 @@ describe("Solaris", function () {
       });
 
       it("gets verified issuers", async () => {
-        const verifiedIssuers = await bridge.getVerifiedIssuers()
+        const verifiedIssuers = await bridgeContract.getVerifiedIssuers()
         expect(verifiedIssuers).to.eql([issuer.address])
       })
 
@@ -212,13 +212,13 @@ describe("Solaris", function () {
 
     describe("Redemption", () => {
       before(async () => {
-        inboundTransfer = new solaris.Transfer({
+        inboundTransfer = new bridge.Transfer({
           direction: {
             source: "XRPL_TESTNET",
             destination: "LOCAL"
           },
           tokenAddress: erc20Token.address,
-          bridgeAddress: bridge.address,
+          bridgeAddress: bridgeContract.address,
           signer: owner,
           provider: hre.ethers.provider
         })
@@ -226,14 +226,14 @@ describe("Solaris", function () {
 
       it("creates a redemption reservation", async () => {
         let data = await inboundTransfer.createRedemptionReservation(receiver.address, issuer.address);
-        let transactionResponse = await bridge.createRedemptionReservation(receiver.address, issuer.address);
+        let transactionResponse = await bridgeContract.createRedemptionReservation(receiver.address, issuer.address);
         expect(data).to.equal(transactionResponse.data)
         expect(inboundTransfer.reservation).to.not.equal(undefined)
       });
 
       it("cancels a redemption reservation", async () => {
         let data = await inboundTransfer.cancelRedemptionReservation(receiver.address, issuer.address);
-        let transactionResponse = await bridge.cancelRedemptionReservation(receiver.address, issuer.address);
+        let transactionResponse = await bridgeContract.cancelRedemptionReservation(receiver.address, issuer.address);
         expect(data).to.equal(transactionResponse.data)
         expect(inboundTransfer.reservation).to.equal(undefined)
       });

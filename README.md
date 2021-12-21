@@ -1,8 +1,8 @@
-# Solaris
+# Trustline Bridge
 
 > Non-custodial network transfers for digital assets between Flare and the XRP Ledger
 
-[![Build](https://github.com/trustline-inc/solaris/actions/workflows/build.yml/badge.svg)](https://github.com/trustline-inc/solaris/actions/workflows/build.yml)
+[![Build](https://github.com/trustline-inc/bridge/actions/workflows/build.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/build.yml)
 
 
 You can view the contract code in the [`contracts`](./contracts) folder. We will add a full API reference soon. You can find everything else in the [documentation&nbsp;📖 ](https://trustline.co)
@@ -10,7 +10,6 @@ You can view the contract code in the [`contracts`](./contracts) folder. We will
 ## Table of Contents
 
 <!--ts-->
-
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -19,13 +18,7 @@ You can view the contract code in the [`contracts`](./contracts) folder. We will
 
 ## Introduction
 
-In designed this SDK with these goals in mind:
-
-1. Ability to identify the current step in the issuance/redemption cycle.
-2. Decouple issuance and redemption cycles into separate processes.
-3. Prepare transactions for signing at each step of a process.
-4. Monitor for each step's transaction confirmation before proceeding.
-5. Verify that an issuer followed the correct procedure.
+This SDK prepares bridge-related transactions for signing.
 
 ## Installation
 
@@ -34,13 +27,13 @@ Install the Node.js package using `npm` or `yarn`.
 Using `npm`:
 
 ```
-npm install --save @trustline/solaris
+npm install --save @trustline/bridge
 ```
 
 Using `yarn`:
 
 ```
-yarn add @trustline/solaris
+yarn add @trustline/bridge
 ```
 
 ## Usage
@@ -48,7 +41,7 @@ yarn add @trustline/solaris
 **Songbird to XRP Ledger Mainnet**
 
 ```javascript
-import * as solaris from "@trustline/solaris"
+import * as bridge from "@trustline/bridge"
 import { BigNumber } from "ethers"
 
 const wallet = new Wallet(
@@ -57,7 +50,7 @@ const wallet = new Wallet(
 )
 
 // Create a transfer instance
-const transfer = new solaris.Transfer({
+const transfer = new bridge.Transfer({
   direction: {
     source: "LOCAL",
     destination: "XRPL_TESTNET"
@@ -69,7 +62,7 @@ const transfer = new solaris.Transfer({
 
 let tx, result
 
-// Allow Solaris to transfer your tokens
+// Allow bridge to transfer your tokens
 tx = await transfer.approve()
 const receipt = await this.signer.sendTransaction(tx)
 const result = await receipt.wait()

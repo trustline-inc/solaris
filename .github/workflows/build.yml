@@ -17,6 +17,6 @@ jobs:
       - name: Archive contract ABI artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: solaris-abi-artifacts
+          name: bridge-abi-artifacts
           path: |
             artifacts

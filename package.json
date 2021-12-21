@@ -1,11 +1,11 @@
 {
-  "name": "@trustline/solaris",
+  "name": "@trustline/bridge",
   "version": "0.2.0",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "repository": {
-    "url": "git://github.com/trustline-inc/solaris.git"
+    "url": "git://github.com/trustline-inc/bridge.git"
   },
   "files": [
     "dist/**/*"
