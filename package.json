@@ -1,11 +1,14 @@
 {
   "name": "@trustline-inc/bridge",
-  "version": "1.0.0-alpha7",
-  "description": "",
+  "version": "1.0.0-alpha8",
+  "description": "An SDK for the Trustline Bridge",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "repository": {
     "url": "git://github.com/trustline-inc/bridge.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "files": [
     "dist/**/*",
