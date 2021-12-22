@@ -1,6 +1,6 @@
 {
   "name": "@trustline-inc/bridge",
-  "version": "1.0.0-alpha8",
+  "version": "1.0.0-alpha9",
   "description": "An SDK for the Trustline Bridge",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
