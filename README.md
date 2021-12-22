@@ -3,7 +3,7 @@
 > Non-custodial network transfers for digital assets between Flare and the XRP Ledger
 
 [![Build](https://github.com/trustline-inc/bridge/actions/workflows/build.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/build.yml)
-
+[![Release](https://github.com/trustline-inc/bridge/actions/workflows/release.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/release.yml)
 
 You can view the contract code in the [`contracts`](./contracts) folder. We will add a full API reference soon. You can find everything else in the [documentation&nbsp;📖 ](https://trustline.co)
 
