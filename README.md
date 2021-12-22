@@ -104,8 +104,7 @@ const result = await receipt.wait()
 // Statuses.PENDING === 1
 let status = await bridge.getIssuerStatus(issuer.address);
 
-// Issue tokens on the XRPL
-await transfer.issueTokens("XRPL_TESTNET", issuer, receiver)
+// [Omitted] Issue tokens on the XRPL
 
 // Verify the issuance
 tx = await transfer.verifyIssuance()
@@ -122,7 +121,7 @@ Install the node modules with `yarn` or `npm install`. Run a local [Flare](https
 To deploy a local bridge, pass the ERC20 token address like this:
 
 ```
-FLARE_DIR=~/Desktop/flare TOKEN_ADDRESS=0x0CFD877CEa82E0DCF1F5f852E4B897A80a9B1EF6 yarn run deploy:local
+FLARE_DIR=~/Desktop/flare TOKEN_ADDRESS=<address> yarn run deploy:local
 ```
 
 ## Publishing
