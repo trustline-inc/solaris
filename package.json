@@ -1,11 +1,11 @@
 {
-  "name": "@trustline-inc/bridge",
+  "name": "@trustline-inc/solaris-sdk",
   "version": "1.0.0-alpha11",
-  "description": "An SDK for the Trustline Bridge",
+  "description": "An SDK for the Solaris Bridge",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "repository": {
-    "url": "git://github.com/trustline-inc/bridge.git"
+    "url": "git://github.com/trustline-inc/solaris-sdk.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

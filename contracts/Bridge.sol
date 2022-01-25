@@ -279,7 +279,8 @@ contract Bridge {
      * @param txID the payment tx ID from the XRPL
      * @param source the source address in the tx
      * @param issuer the issuer address of the tx
-     * @param amount sent in tx
+     * @param amount The amount of tokens to redeem
+     * @param destAddress The receiving account on Flare
      **/
     function completeRedemption(
         bytes32 txID,

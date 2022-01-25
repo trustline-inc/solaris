@@ -105,7 +105,6 @@ export class Transfer {
    */
   createIssuer = async (issuer: string) => {
     this.issuer = issuer
-    console.log(this.issuer, this.amount)
     const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.provider)
     return bridge.interface.encodeFunctionData("createIssuer", [this.issuer, this.amount])
   }
@@ -197,6 +196,28 @@ export class Transfer {
       [
         redeemerAddress,
         issuerAddress
+      ]
+    )
+  }
+
+  /**
+   * @function completeRedemption
+   * @param {string} txID The ID of the XRPL redemption transaction
+   * @param {string} source The address of the sending account
+   * @param {string} issuer The address of the issuing account
+   * @param {BigNumber} amount The amount sent
+   * @param {string} destAddress The address of the receiving account on Flare
+   */
+  completeRedemption = async (txID: string, source: string, issuer: string, amount: BigNumber, destAddress: string) => {
+    const bridge = new Contract(this.bridgeAddress, BridgeABI.abi, this.signer)
+    return bridge.interface.encodeFunctionData(
+      "completeRedemption",
+      [
+        txID,
+        source,
+        issuer,
+        Number(amount.div("1000000000000000000")),
+        destAddress
       ]
     )
   }

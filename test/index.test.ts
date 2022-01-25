@@ -3,7 +3,7 @@ import { deployBridgeSystem } from "../lib/deployer"
 import axios from "axios"
 import { BigNumber } from "@ethersproject/bignumber"
 import { RippleAPI } from "ripple-lib"
-import * as bridge from "../src/index"
+import * as solaris from "../src/index"
 import { Bridge, StateConnector, Erc20Token } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as chai from "chai";
@@ -31,7 +31,7 @@ let outboundTransfer: any;
 // Constants
 const WAD = BigNumber.from("1000000000000000000")
 
-describe("bridge", function () {
+describe("Solaris", function () {
   before(async () => {
     // Fund XRPL accounts
     await axios({
@@ -79,7 +79,7 @@ describe("bridge", function () {
 
     it("throws for unsupported asset", async () => {
       const createTransfer = function() {
-        new bridge.Transfer({
+        new solaris.Transfer({
           direction: {
             source: "LOCAL",
             destination: "XRPL_TESTNET"
@@ -96,7 +96,7 @@ describe("bridge", function () {
 
     it("stores the amount as a BigNumber", async () => {
       const amount = BigNumber.from(100).mul(WAD)
-      const transfer = new bridge.Transfer({
+      const transfer = new solaris.Transfer({
         direction: {
           source: "LOCAL",
           destination: "XRPL_TESTNET"
@@ -114,7 +114,7 @@ describe("bridge", function () {
     describe("Issuance", () => {
       before(async () => {
         const amount = BigNumber.from(100).mul(WAD)
-        outboundTransfer = new bridge.Transfer({
+        outboundTransfer = new solaris.Transfer({
           direction: {
             source: "LOCAL",
             destination: "XRPL_TESTNET"
@@ -212,11 +212,13 @@ describe("bridge", function () {
 
     describe("Redemption", () => {
       before(async () => {
-        inboundTransfer = new bridge.Transfer({
+        const amount = BigNumber.from(100).mul(WAD)
+        inboundTransfer = new solaris.Transfer({
           direction: {
             source: "XRPL_TESTNET",
             destination: "LOCAL"
           },
+          amount,
           tokenAddress: erc20Token.address,
           bridgeAddress: bridgeContract.address,
           signer: owner,
@@ -237,6 +239,56 @@ describe("bridge", function () {
         expect(data).to.equal(transactionResponse.data)
         expect(inboundTransfer.reservation).to.equal(undefined)
       });
+
+      it("proves that tokens were released to the issuing account", async () => {
+        // Re-create reservation, since it was cancelled in the previous test
+        await bridgeContract.createRedemptionReservation(receiver.address, issuer.address);
+
+        await api.connect()
+  
+        // Redeem tokens on the XRPL
+        let latestLedgerVersion = await api.getLedgerVersion()
+        const preparedTx = await api.prepareTransaction({
+          TransactionType: "Payment",
+          Account: receiver.address,
+          Amount: {
+            currency: "AUR",
+            value: api.xrpToDrops(inboundTransfer.amount.div(WAD).toString()),
+            issuer: issuer.address
+          },
+          Destination: issuer.address,
+          LastLedgerSequence: latestLedgerVersion + 15
+        })
+        const response = api.sign(preparedTx.txJSON, receiver.secret)
+        const txID = response.id
+        const txBlob = response.signedTransaction
+        latestLedgerVersion = await api.getLedgerVersion()
+        await api.submit(txBlob)
+
+        setTimeout(() => { return }, 3000)
+
+        const balanceBefore = await erc20Token.balanceOf(owner.address)
+        console.log(balanceBefore.toString())
+
+        let data = await inboundTransfer.completeRedemption(
+          utils.id(txID),
+          receiver.address,
+          issuer.address,
+          inboundTransfer.amount,
+          owner.address
+        )
+        let transactionResponse = await bridgeContract.completeRedemption(
+          utils.id(txID),
+          receiver.address,
+          issuer.address,
+          Number(inboundTransfer.amount.div("1000000000000000000")),
+          owner.address
+        )
+        expect(data).to.equal(transactionResponse.data)
+
+        const balanceAfter = await erc20Token.balanceOf(owner.address)
+        // expect(balanceAfter).to.equal(balanceBefore.sub(Number(inboundTransfer.amount.div("1000000000000000000"))))
+      })
 
     })
 

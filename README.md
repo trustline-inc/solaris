@@ -1,11 +1,11 @@
-# Trustline Bridge
+# Solaris SDK
 
-> Non-custodial network transfers for digital assets between Flare and the XRP Ledger
+> SDK for digital asset transfers between Flare and the XRPL
 
 [![Build](https://github.com/trustline-inc/bridge/actions/workflows/build.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/build.yml)
 [![Release](https://github.com/trustline-inc/bridge/actions/workflows/release.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/release.yml)
 
-You can view the contract code in the [`contracts`](./contracts) folder. We will add a full API reference soon. You can find everything else in the [documentation&nbsp;📖 ](https://trustline.co)
+You can view the bridge contract code in the [`contracts`](./contracts) folder. We will add a full API reference soon. You can find everything else in the [documentation&nbsp;📖 ](https://trustline.co)
 
 ## Table of Contents
 
@@ -27,13 +27,13 @@ Install the Node.js package using `npm` or `yarn`.
 Using `npm`:
 
 ```
-npm install --save @trustline/bridge
+npm install --save @trustline/solaris-sdk
 ```
 
 Using `yarn`:
 
 ```
-yarn add @trustline/bridge
+yarn add @trustline/solaris-sdk
 ```
 
 ## Usage
@@ -41,7 +41,7 @@ yarn add @trustline/bridge
 **Songbird to XRP Ledger Mainnet**
 
 ```javascript
-import * as bridge from "@trustline/bridge"
+import * as solaris from "@trustline/solaris-sdk"
 import { BigNumber } from "ethers"
 
 const wallet = new Wallet(
@@ -50,7 +50,7 @@ const wallet = new Wallet(
 )
 
 // Create a transfer instance
-const transfer = new bridge.Transfer({
+const transfer = new solaris.Transfer({
   direction: {
     source: "LOCAL",
     destination: "XRPL_TESTNET"
@@ -62,7 +62,7 @@ const transfer = new bridge.Transfer({
 
 let tx, result
 
-// Allow bridge to transfer your tokens
+// Allow Solaris to transfer your tokens
 tx = await transfer.approve()
 const receipt = await this.signer.sendTransaction(tx)
 const result = await receipt.wait()
@@ -102,7 +102,7 @@ const receipt = await this.signer.sendTransaction(tx)
 const result = await receipt.wait()
 
 // Statuses.PENDING === 1
-let status = await bridge.getIssuerStatus(issuer.address);
+let status = await solaris.getIssuerStatus(issuer.address);
 
 // [Omitted] Issue tokens on the XRPL
 
@@ -111,7 +111,7 @@ tx = await transfer.verifyIssuance()
 await tx.wait()
 
 // Statuses.COMPLETED === 3
-status = await bridge.getIssuerStatus(issuer.address);
+status = await solaris.getIssuerStatus(issuer.address);
 ```
 
 ## Development
