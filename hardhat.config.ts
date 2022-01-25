@@ -16,9 +16,16 @@ if (existsSync(flareConfPath)) {
 const config: HardhatUserConfig = {
   defaultNetwork: "coston",
   networks: {
-    coston: {
+    internal: {
       url: "https://coston.trustline.co/ext/bc/C/rpc",
       accounts: [],
+      chainId: 16,
+    },
+    coston: {
+      url: "https://coston-api.flare.network/ext/bc/C/rpc",
+      accounts: [
+        "9f05cbe65ef2defab75440cb91ca1de405233a9f6c3d16bc1a5433edc28f20b4",
+      ],
       chainId: 16,
     },
     hardhat: {

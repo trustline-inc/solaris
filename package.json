@@ -32,7 +32,9 @@
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts",
     "test:package": "npx hardhat test ./test/index.test.ts --network hardhat",
     "test:contracts": "npx hardhat test ./test/contracts/*.test.ts --network hardhat",
-    "deploy:local": "npx hardhat --network local run ./scripts/deploy.ts"
+    "deploy:local": "npx hardhat --network local run ./scripts/deploy.ts",
+    "deploy:internal": "npx hardhat --network internal run ./scripts/deploy.ts",
+    "deploy:coston": "npx hardhat --network coston run ./scripts/deploy.ts"
   },
   "keywords": [],
   "contributors": [
