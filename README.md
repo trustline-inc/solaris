@@ -1,5 +1,7 @@
 # Solaris SDK
 
+![Solaris](./solaris.png)
+
 > SDK for digital asset transfers between Flare and the XRPL
 
 [![Build](https://github.com/trustline-inc/bridge/actions/workflows/build.yml/badge.svg)](https://github.com/trustline-inc/bridge/actions/workflows/build.yml)
