@@ -4,55 +4,55 @@ import { ethers } from "hardhat";
 
 // Import contract factory types
 import {
-  BridgeFactory,
-  StateConnectorFactory,
-  Erc20TokenFactory,
-} from "../typechain";
+  Bridge__factory,
+  StateConnector__factory,
+  ERC20Token__factory,
+} from "../typechain-types";
 
 // Import contract types
 import {
   Bridge,
   StateConnector,
-  Erc20Token,
-} from "../typechain";
+  ERC20Token,
+} from "../typechain-types";
 
 /**
  * Contracts
  */
 interface Contracts {
-  bridge: Bridge;
-  stateConnector: StateConnector;
-  erc20: Erc20Token;
+  bridge?: Bridge;
+  stateConnector?: StateConnector;
+  erc20?: ERC20Token;
 }
 
 const contracts: Contracts = {
-  bridge: null,
-  stateConnector: null,
-  erc20: null,
+  bridge: undefined,
+  stateConnector: undefined,
+  erc20: undefined,
 };
 
 interface Signers {
-  owner: SignerWithAddress;
-  alice: SignerWithAddress;
-  bob: SignerWithAddress;
-  charlie: SignerWithAddress;
-  don: SignerWithAddress;
-  lender: SignerWithAddress;
-  borrower: SignerWithAddress;
-  liquidator: SignerWithAddress;
-  addrs: SignerWithAddress[];
+  owner?: SignerWithAddress;
+  alice?: SignerWithAddress;
+  bob?: SignerWithAddress;
+  charlie?: SignerWithAddress;
+  don?: SignerWithAddress;
+  lender?: SignerWithAddress;
+  borrower?: SignerWithAddress;
+  liquidator?: SignerWithAddress;
+  addrs?: SignerWithAddress[];
 }
 
 const signers: Signers = {
-  owner: null,
-  alice: null,
-  bob: null,
-  charlie: null,
-  don: null,
-  lender: null,
-  borrower: null,
-  liquidator: null,
-  addrs: null,
+  owner: undefined,
+  alice: undefined,
+  bob: undefined,
+  charlie: undefined,
+  don: undefined,
+  lender: undefined,
+  borrower: undefined,
+  liquidator: undefined,
+  addrs: undefined,
 };
 
 const getSigners = async () => {
@@ -77,7 +77,7 @@ const deployERC20 = async () => {
   const erc20Factory = (await ethers.getContractFactory(
       "ERC20Token",
       signers.owner
-  )) as Erc20TokenFactory;
+  )) as ERC20Token__factory;
   contracts.erc20 = await erc20Factory.deploy();
 
   await contracts.erc20.deployed();
@@ -91,17 +91,19 @@ const deployBridge = async (erc20Address?: string) => {
   const stateConnectorFactory = (await ethers.getContractFactory(
       "StateConnector",
       signers.owner
-  )) as StateConnectorFactory;
+  )) as StateConnector__factory;
   contracts.stateConnector = await stateConnectorFactory.deploy();
   await contracts.stateConnector.deployed();
 
   const bridgeFactory = (await ethers.getContractFactory(
       "Bridge",
       signers.owner
-  )) as BridgeFactory;
+  )) as Bridge__factory;
   contracts.bridge = await bridgeFactory.deploy(
-      "AUR",
-      (erc20Address === null || erc20Address === undefined) ? contracts.erc20.address : erc20Address,
+      "USD",
+      (erc20Address === null || erc20Address === undefined) ? (
+        contracts.erc20?.address ? contracts.erc20?.address : ""
+      ) : erc20Address,
       contracts.stateConnector.address
   );
   await contracts.bridge.deployed();

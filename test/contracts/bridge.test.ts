@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import "@nomiclabs/hardhat-ethers";
 // import "@nomiclabs/hardhat-waffle";
 
-import { Erc20Token, Bridge, StateConnector } from "../../typechain";
+import { ERC20Token, Bridge, StateConnector } from "../../typechain-types";
 import { deployBridgeSystem } from "../../lib/deployer";
 import { ethers } from "hardhat";
 import * as chai from "chai";
@@ -18,7 +18,7 @@ let owner: SignerWithAddress;
 let user: SignerWithAddress;
 
 // Contracts
-let erc20Token: Erc20Token;
+let erc20Token: ERC20Token;
 let bridge: Bridge;
 let stateConnector: StateConnector;
 let txHash: any;
@@ -40,18 +40,18 @@ describe("Bridge", function () {
     const { contracts, signers } = await deployBridgeSystem();
 
     // Set contracts
-    erc20Token = contracts.erc20;
-    bridge = contracts.bridge;
-    stateConnector = contracts.stateConnector;
+    erc20Token = contracts.erc20!;
+    bridge = contracts.bridge!;
+    stateConnector = contracts.stateConnector!;
 
-    await erc20Token.mint(signers.owner.address, 10000);
+    await erc20Token.mint(signers.owner?.address!, 10000);
     await erc20Token.approve(bridge.address, 10000);
 
     await stateConnector.setFinality(true);
     issuer = "rDfB33LHNMmWSUHoXUd2pj1oJxsDZ7e2dn";
-    redeemer = signers.charlie;
-    owner = signers.owner;
-    user = signers.alice;
+    redeemer = signers.charlie!;
+    owner = signers.owner!;
+    user = signers.alice!;
     txHash = ethers.utils.id("tx hash");
     currencyHash = ethers.utils.id("currency hash");
     source = "source";
@@ -350,8 +350,10 @@ describe("Bridge", function () {
         return x.event == "IssuanceCompleted";
       });
 
+      // @ts-ignore
       expect(event[0].args[0]).to.equal(issuer);
-      expect(event[0].args[1].toNumber()).to.equal(AMOUNT_TO_ISSUE);
+      // @ts-ignore
+      expect(event[0].args[1]?.toNumber()).to.equal(AMOUNT_TO_ISSUE);
     });
 
     it("checks that issuer is added to verifiedIssuerList", async () => {

@@ -11,8 +11,8 @@ contract ERC20Token is IERC20, Ownable {
     // --- Data ---
 
     uint256 private _totalSupply;
-    string internal constant _NAME = "Aurei";
-    string internal constant _SYMBOL = "AUR";
+    string internal constant _NAME = "Trustline USD";
+    string internal constant _SYMBOL = "USD";
     string internal constant _VERSION = "1.0.0";
     uint8 internal constant _DECIMALS = 18;
 
@@ -170,7 +170,7 @@ contract ERC20Token is IERC20, Ownable {
     function _requireValidRecipient(address _recipient) internal view {
         require(
             _recipient != address(0) && _recipient != address(this),
-            "AUR: Cannot transfer tokens directly to the AUR token contract or the zero address"
+            "USD: Cannot transfer tokens directly to the USD token contract or the zero address"
         );
     }
 }

@@ -1,6 +1,7 @@
 require("dotenv").config();
-import "@typechain/hardhat";
-import "@nomiclabs/hardhat-ethers";
+import '@typechain/hardhat'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 import { HardhatUserConfig } from "hardhat/config";
 
 const config: HardhatUserConfig = {

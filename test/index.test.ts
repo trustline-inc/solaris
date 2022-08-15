@@ -4,7 +4,7 @@ import axios from "axios"
 import { BigNumber } from "@ethersproject/bignumber"
 import { RippleAPI } from "ripple-lib"
 import * as solaris from "../src/index"
-import { Bridge, StateConnector, Erc20Token } from "../typechain";
+import { Bridge, StateConnector, ERC20Token } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as chai from "chai";
 import hre from "hardhat"
@@ -15,7 +15,7 @@ const api = new RippleAPI({ server: "wss://s.altnet.rippletest.net" })
 // Contracts
 let bridgeContract: Bridge;
 let stateConnector: StateConnector;
-let erc20Token: Erc20Token;
+let erc20Token: ERC20Token;
 
 // Flare wallets
 let owner: SignerWithAddress;
@@ -62,14 +62,14 @@ describe("Solaris", function () {
     const { contracts, signers } = await deployBridgeSystem();
 
     // Set contracts
-    bridgeContract = contracts.bridge;
-    stateConnector = contracts.stateConnector;
-    erc20Token = contracts.erc20;
+    bridgeContract = contracts.bridge!;
+    stateConnector = contracts.stateConnector!;
+    erc20Token = contracts.erc20!;
 
     // Set wallets
-    owner = signers.owner
+    owner = signers.owner!
 
-    await erc20Token.mint(signers.owner.address, BigNumber.from(10000).mul(WAD));
+    await erc20Token.mint(signers.owner?.address!, BigNumber.from(10000).mul(WAD));
     await erc20Token.approve(bridgeContract.address, BigNumber.from(10000).mul(WAD));
     await stateConnector.setFinality(true);
   });
@@ -132,16 +132,16 @@ describe("Solaris", function () {
         let transactionResponse = await erc20Token.approve(bridgeContract.address, outboundTransfer.amount);
         expect(data).to.equal(transactionResponse.data)
         data = await outboundTransfer.createIssuer(issuer.address)
-        transactionResponse = await bridgeContract.createIssuer(issuer.address, outboundTransfer.amount);
+        transactionResponse = await bridgeContract.createIssuer(issuer.address!, outboundTransfer.amount);
         expect(data).to.equal(transactionResponse.data)
   
-        let status = await bridgeContract.getIssuerStatus(issuer.address);
+        let status = await bridgeContract.getIssuerStatus(issuer.address!);
         expect(status).to.equal(1); // Statuses.PENDING === 1
   
         // Create trust line from receiver to issuer
         let tx = {
-          currency: "AUR",
-          counterparty: issuer.address,
+          currency: "USD",
+          counterparty: issuer.address!,
           limit: "999999999",
           qualityIn: 1,
           qualityOut: 1,
@@ -157,7 +157,7 @@ describe("Solaris", function () {
         }
   
         await api.connect()
-        const prepared = await api.prepareTrustline(receiver.address, tx)
+        const prepared = await api.prepareTrustline(receiver.address!, tx)
         const signed = api.sign(prepared.txJSON, receiver.secret).signedTransaction
         await api.submit(signed)
   
@@ -167,9 +167,9 @@ describe("Solaris", function () {
         let latestLedgerVersion = await api.getLedgerVersion()
         const preparedTx = await api.prepareTransaction({
           TransactionType: "Payment",
-          Account: issuer.address,
+          Account: issuer.address!,
           Amount: {
-            currency: "AUR",
+            currency: "USD",
             value: api.xrpToDrops(outboundTransfer.amount.div(WAD).toString()),
             issuer: issuer.address
           },
@@ -190,13 +190,13 @@ describe("Solaris", function () {
         transactionResponse = await bridgeContract.completeIssuance(
           utils.id(txID),
           "source",
-          issuer.address,
+          issuer.address!,
           0,
           outboundTransfer.amount.div(WAD)
         )
         expect(data).to.equal(transactionResponse.data)
   
-        status = await bridgeContract.getIssuerStatus(issuer.address);
+        status = await bridgeContract.getIssuerStatus(issuer.address!);
         expect(status).to.equal(3); // Statuses.COMPLETED === 3
   
         await api.disconnect()
@@ -228,21 +228,21 @@ describe("Solaris", function () {
 
       it("creates a redemption reservation", async () => {
         let data = await inboundTransfer.createRedemptionReservation(receiver.address, issuer.address);
-        let transactionResponse = await bridgeContract.createRedemptionReservation(receiver.address, issuer.address);
+        let transactionResponse = await bridgeContract.createRedemptionReservation(receiver.address!, issuer.address!);
         expect(data).to.equal(transactionResponse.data)
         expect(inboundTransfer.reservation).to.not.equal(undefined)
       });
 
       it("cancels a redemption reservation", async () => {
         let data = await inboundTransfer.cancelRedemptionReservation(receiver.address, issuer.address);
-        let transactionResponse = await bridgeContract.cancelRedemptionReservation(receiver.address, issuer.address);
+        let transactionResponse = await bridgeContract.cancelRedemptionReservation(receiver.address!, issuer.address!);
         expect(data).to.equal(transactionResponse.data)
         expect(inboundTransfer.reservation).to.equal(undefined)
       });
 
       it("proves that tokens were released to the issuing account", async () => {
         // Re-create reservation, since it was cancelled in the previous test
-        await bridgeContract.createRedemptionReservation(receiver.address, issuer.address);
+        await bridgeContract.createRedemptionReservation(receiver.address!, issuer.address!);
 
         await api.connect()
   
@@ -250,9 +250,9 @@ describe("Solaris", function () {
         let latestLedgerVersion = await api.getLedgerVersion()
         const preparedTx = await api.prepareTransaction({
           TransactionType: "Payment",
-          Account: receiver.address,
+          Account: receiver.address!,
           Amount: {
-            currency: "AUR",
+            currency: "USD",
             value: api.xrpToDrops(inboundTransfer.amount.div(WAD).toString()),
             issuer: issuer.address
           },
@@ -279,8 +279,8 @@ describe("Solaris", function () {
         )
         let transactionResponse = await bridgeContract.completeRedemption(
           utils.id(txID),
-          receiver.address,
-          issuer.address,
+          receiver.address!,
+          issuer.address!,
           Number(inboundTransfer.amount.div("1000000000000000000")),
           owner.address
         )
