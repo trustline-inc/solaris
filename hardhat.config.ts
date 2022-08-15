@@ -1,5 +1,5 @@
 require("dotenv").config();
-import "hardhat-typechain";
+import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 
