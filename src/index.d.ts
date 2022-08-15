@@ -1,2 +1,2 @@
-declare module "@trustline/solaris-sdk"
-declare module "@trustline/solaris-sdk/dist/src/index"
+declare module "@trustline/solaris"
+declare module "@trustline/solaris/dist/src/index"
