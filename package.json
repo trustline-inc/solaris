@@ -1,6 +1,6 @@
 {
   "name": "@trustline-inc/solaris",
-  "version": "1.0.0-alpha14",
+  "version": "1.0.0-alpha15",
   "description": "Smart contracts and SDK for the Solaris bridge protocol",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
