@@ -29,13 +29,13 @@ Install the Node.js package using `npm` or `yarn`.
 Using `npm`:
 
 ```
-npm install --save @trustline/solaris
+npm install --save @trustline-inc/solaris
 ```
 
 Using `yarn`:
 
 ```
-yarn add @trustline/solaris
+yarn add @trustline-inc/solaris
 ```
 
 ## Usage
@@ -43,7 +43,7 @@ yarn add @trustline/solaris
 **Songbird to XRP Ledger Mainnet**
 
 ```javascript
-import * as solaris from "@trustline/solaris"
+import * as solaris from "@trustline-inc/solaris"
 import { BigNumber } from "ethers"
 
 const wallet = new Wallet(
